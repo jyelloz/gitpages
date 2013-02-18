@@ -2,5 +2,8 @@ dulwich
 Flask
 Flask-Script
 Flask-Failsafe
-whoosh
-pygments
+Whoosh
+Pygments
+msgpack-python
+bpython
+ipython
