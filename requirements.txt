@@ -1,4 +1,6 @@
 dulwich
-flask
+Flask
+Flask-Script
+Flask-Failsafe
 whoosh
 pygments
