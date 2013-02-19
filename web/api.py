@@ -8,9 +8,10 @@ class Page(object):
 
 class GitPages(object):
 
-    def __init__(self, repo, index):
-        self.repo = repo
-        self.index = index
+    def __init__(self, repo, date_index, history_index):
+        self._repo = repo
+        self._date_index = date_index
+        self._history_index = history_index
 
     def page(self, date, slug, ref):
         pass
@@ -22,6 +23,9 @@ class GitPages(object):
         pass
 
     def next_page(self, page):
+        pass
+
+    def teardown(self):
         pass
 
 

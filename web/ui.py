@@ -1,16 +1,40 @@
-from flask import Flask
+from flask import Flask, Blueprint, g
 from flask_failsafe import failsafe
 
 import api as web_api
 
+
 @failsafe
 def create():
 
-    gitpages_web_ui = Flask(__name__)
+    from dulwich.repo import Repo
+
+    gitpages_web_ui = Blueprint('gitpages_web_ui', __name__)
 
     gitpages_web_ui.add_url_rule('/page/<page_pk>', 'page_view', page_view)
+    gitpages_web_ui.gitpages = web_api.GitPages(None, None)
 
-    return gitpages_web_ui
+    repo = Repo('repo.git')
+
+    @gitpages_web_ui.before_request
+    def setup_gitpages():
+        g.gitpages = web_api.GitPages(repo, None)
+
+    @gitpages_web_ui.teardown_request
+    def teardown_gitpages(exception=None):
+
+        gitpages = getattr(g, 'gitpages', None)
+
+        if not gitpages:
+            return
+
+        gitpages.teardown()
+
+    application = Flask(__name__)
+    application.register_blueprint(gitpages_web_ui)
+
+    return application
+
 
 def page_view(page_pk):
 
@@ -31,11 +55,12 @@ def page_view(page_pk):
         code_html=page_html,
     )
 
-
     return (
         html,
         200,
-        { 'Content-Type': 'text/html; charset=utf-8' },
+        {
+            'Content-Type': 'text/html; charset=utf-8',
+        },
     )
 
 _PAGE_TEMPLATE = u'''\
@@ -55,6 +80,7 @@ _PAGE_TEMPLATE = u'''\
     </body>
 </html>
 '''
+
 
 def _build_html_formatter():
     from pygments.formatters import HtmlFormatter
