@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from flask.ext.script import Manager
 
 from web.ui import create
