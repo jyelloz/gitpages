@@ -4,6 +4,7 @@ Flask-Script
 Flask-Failsafe
 Whoosh
 Pygments
+pytz
 PyYAML
 msgpack-python
 bpython
