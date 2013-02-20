@@ -15,3 +15,4 @@ class PageHistory(Schema):
     blob_id = ID(stored=True)
     parent_id = ID(stored=True)
     date = DATETIME(stored=True, sortable=True)
+    ref = ID(stored=True)
