@@ -14,19 +14,30 @@ class GitPages(object):
         self._history_index = history_index
 
     def page(self, date, slug, ref):
-        pass
+
+        with self._date_index.searcher():
+            pass
 
     def history(self, page):
         pass
 
-    def previous_page(self, page):
+    def older_pages(self, page):
         pass
 
-    def next_page(self, page):
+    def newer_pages(self, page):
         pass
 
     def teardown(self):
-        pass
+
+        try:
+            self._date_index.close()
+        except:
+            pass
+
+        try:
+            self._history_index.close()
+        except:
+            pass
 
 
 def page(page_pk):
