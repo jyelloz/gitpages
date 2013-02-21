@@ -7,7 +7,8 @@ class ByDate(SchemaClass):
     blob_id = ID(stored=True)
     slug = TEXT(stored=True)
     title = TEXT(stored=True)
-    ref = ID(stored=True)
+    ref_id = ID(stored=True)
+    blob_id__ref_id = ID(stored=False, unique=True)
 
 
 class PageHistory(SchemaClass):
