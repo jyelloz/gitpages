@@ -1,7 +1,7 @@
-from whoosh.fields import Schema, ID, DATETIME, TEXT
+from whoosh.fields import SchemaClass, ID, DATETIME, TEXT
 
 
-class ByDate(Schema):
+class ByDate(SchemaClass):
 
     date = DATETIME(stored=True, sortable=True)
     blob_id = ID(stored=True)
@@ -10,7 +10,7 @@ class ByDate(Schema):
     ref = ID(stored=True)
 
 
-class PageHistory(Schema):
+class PageHistory(SchemaClass):
 
     blob_id = ID(stored=True)
     parent_id = ID(stored=True)
