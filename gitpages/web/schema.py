@@ -1,4 +1,4 @@
-from whoosh.fields import SchemaClass, ID, DATETIME, TEXT
+from whoosh.fields import SchemaClass, ID, DATETIME, TEXT, NUMERIC
 
 
 class ByDate(SchemaClass):

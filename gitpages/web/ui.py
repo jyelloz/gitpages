@@ -1,7 +1,7 @@
 from flask import Flask, Blueprint, g
 from flask_failsafe import failsafe
 
-import api as web_api
+from . import api
 
 
 @failsafe
@@ -17,7 +17,7 @@ def create():
 
     @gitpages_web_ui.before_request
     def setup_gitpages():
-        g.gitpages = web_api.GitPages(repo, None, None)
+        g.gitpages = api.GitPages(repo, None, None)
 
     @gitpages_web_ui.teardown_request
     def teardown_gitpages(exception=None):
@@ -42,7 +42,7 @@ def page_view(page_pk):
     from pygments.lexers import YamlLexer
     from flask import render_template_string
 
-    page = web_api.page(page_pk)
+    page = api.page(page_pk)
     page_yaml = dump(page)
 
     page_html = highlight(page_yaml, YamlLexer(), _HTML_FORMATTER)
@@ -89,7 +89,3 @@ def _build_html_formatter():
     return html_formatter, style_css
 
 _HTML_FORMATTER, _STYLE_CSS = _build_html_formatter()
-
-
-if __name__ == '__main__':
-    create().run(debug=True)

@@ -1,3 +1,6 @@
+from . import schema
+
+
 class Page(object):
 
     def __init__(self, pk, history):
