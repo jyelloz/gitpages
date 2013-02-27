@@ -1,17 +1,36 @@
-from flask import Flask, Blueprint, g
+from flask import Blueprint, g
 from flask_failsafe import failsafe
 
-from . import api
+from datetime import datetime
+
+from . import api, schema
 
 
-@failsafe
-def create():
+def create_blueprint():
 
     from dulwich.repo import Repo
+    from whoosh import index
 
     gitpages_web_ui = Blueprint('gitpages_web_ui', __name__)
 
-    gitpages_web_ui.add_url_rule('/page/<page_pk>', 'page_view', page_view)
+    gitpages_web_ui.add_url_rule(
+        '/' + '/'.join(
+            [
+                'page',
+                '<int(fixed_digits=4):year>',
+                '<int(fixed_digits=2):month>',
+                '<int(fixed_digits=2):day>',
+                '<slug>!<ref>',
+            ]
+        ),
+        'page_archive_view',
+        page_archive_view
+    )
+    gitpages_web_ui.add_url_rule(
+        '/page/<slug>!<ref>',
+        'page_view',
+        page_view
+    )
 
     repo = Repo('repo.git')
 
@@ -29,27 +48,37 @@ def create():
 
         gitpages.teardown()
 
-    application = Flask(__name__)
-    application.register_blueprint(gitpages_web_ui)
-
-    return application
+    return gitpages_web_ui
 
 
-def page_view(page_pk):
+def page_archive_view(year, month, day, slug, ref):
+
+    page = g.gitpages.page(datetime(year, month, day), slug, ref)
+
+    return page_view_page(page)
+
+
+def page_view(slug, ref):
+
+    page = api.page(slug, ref)
+
+    return page_view_page(page)
+
+
+def page_view_page(page):
 
     from yaml import dump
     from pygments import highlight
     from pygments.lexers import YamlLexer
     from flask import render_template_string
 
-    page = api.page(page_pk)
     page_yaml = dump(page)
 
     page_html = highlight(page_yaml, YamlLexer(), _HTML_FORMATTER)
 
     html = render_template_string(
         _PAGE_TEMPLATE,
-        title='Page#%s' % page_pk,
+        title='Page#%s,%s' % (page.slug, page.ref),
         style_css=_STYLE_CSS,
         code_html=page_html,
     )
