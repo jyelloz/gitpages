@@ -2,7 +2,7 @@
 
 from flask.ext.script import Manager
 
-from web.ui import create
+from gitpages.web.application import create
 
 manager = Manager(create())
 
