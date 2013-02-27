@@ -1,5 +1,4 @@
-from flask import Flask
-from flask_failsafe import failsafe
+#!/usr/bin/env python
 
 from gitpages.web.application import create
 
