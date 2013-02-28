@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from urllib import quote_plus, unquote_plus
 from uuid import UUID
 

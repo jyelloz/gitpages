@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from whoosh.fields import SchemaClass, ID, DATETIME, TEXT, NUMERIC
 
 
