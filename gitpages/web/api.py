@@ -9,11 +9,10 @@ from .exceptions import PageNotFound
 
 class Page(object):
 
-    def __init__(self, slug, ref, text, history):
+    def __init__(self, slug, ref, text):
         self.slug = slug
         self.ref = ref
         self.text = text
-        self.history = history
 
 
 class GitPages(object):
@@ -51,7 +50,7 @@ class GitPages(object):
             page_result = results[0]
             blob = self._repo.get_blob(page_result.blob_id)
 
-            return Page(slug, ref, blob, [])
+            return Page(slug, ref, blob)
 
     def history(self, page):
         return page_history(page.slug)
@@ -73,14 +72,6 @@ class GitPages(object):
             self._history_index.close()
         except:
             pass
-
-
-def page(page_pk, ref='HEAD'):
-    return Page(
-        page_pk,
-        ref,
-        list(page_history(page_pk))
-    )
 
 
 def page_history(page_pk):
