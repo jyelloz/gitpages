@@ -1,15 +1,35 @@
+from datetime import datetime, timedelta
+
+from whoosh.query import Term, DateRange
+
+
+class PageNotFound(Exception):
+
+    def __init__(self, date, slug, ref):
+
+        super(PageNotFound, self).__init__()
+
+        self.date = date
+        self.slug = slug
+        self.ref = ref
+
+    def __unicode__(self):
+
+        return u'PageNotFound[%r, %r, %r]' % (self.date, self.slug, self.ref)
 
 
 class Page(object):
 
-    def __init__(self, slug, ref, history):
+    def __init__(self, slug, ref, text, history):
         self.slug = slug
         self.ref = ref
-        self.text = 'this is the text for page#%s' % slug
+        self.text = text
         self.history = history
 
 
 class GitPages(object):
+
+    _max_timedelta = timedelta(days=1)
 
     def __init__(self, repo, date_index, history_index):
         self._repo = repo
@@ -18,11 +38,34 @@ class GitPages(object):
 
     def page(self, date, slug, ref):
 
-        with self._date_index.searcher():
-            pass
+        earliest = datetime(date.year, date.month, date.day)
+        latest = earliest + GitPages._max_timedelta
+
+        query = (
+            Term('slug', unicode(slug)) &
+            DateRange(
+                'date',
+                start=earliest,
+                end=latest,
+                startexcl=False,
+                endexcl=True,
+            )
+        )
+
+        with self._date_index.searcher() as s:
+
+            results = s.search(query, limit=1)
+
+            if results.is_empty():
+                raise PageNotFound(date, slug, ref)
+
+            page_result = results[0]
+            blob = self._repo.get_blob(page_result.blob_id)
+
+            return Page(slug, ref, blob, [])
 
     def history(self, page):
-        pass
+        return page_history(page.slug)
 
     def older_pages(self, page):
         pass
