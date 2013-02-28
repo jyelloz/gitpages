@@ -1,11 +1,11 @@
-from . import schema
 
 
 class Page(object):
 
-    def __init__(self, pk, history):
-        self.pk = pk
-        self.text = 'this is the text for page#%s' % pk
+    def __init__(self, slug, ref, history):
+        self.slug = slug
+        self.ref = ref
+        self.text = 'this is the text for page#%s' % slug
         self.history = history
 
 
@@ -43,9 +43,10 @@ class GitPages(object):
             pass
 
 
-def page(page_pk):
+def page(page_pk, ref='HEAD'):
     return Page(
         page_pk,
+        ref,
         list(page_history(page_pk))
     )
 
