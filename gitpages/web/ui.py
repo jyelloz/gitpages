@@ -12,7 +12,7 @@ from .api import GitPages
 def create_blueprint():
 
     from dulwich.repo import Repo
-    from whoosh import index
+    from whoosh import ramindex
 
     gitpages_web_ui = Blueprint('gitpages_web_ui', __name__)
 
@@ -48,9 +48,12 @@ def create_blueprint():
 
     repo = Repo('repo.git')
 
+    date_index = ramindex.RamIndex(ByDate())
+    history_index = ramindex.RamIndex(PageHistory())
+
     @gitpages_web_ui.before_request
     def setup_gitpages():
-        g.gitpages = api.GitPages(repo, None, None)
+        g.gitpages = GitPages(repo, date_index, history_index)
 
     @gitpages_web_ui.teardown_request
     def teardown_gitpages(exception=None):
