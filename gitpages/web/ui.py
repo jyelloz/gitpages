@@ -18,16 +18,27 @@ def create_blueprint():
                 '<int(fixed_digits=4):year>',
                 '<int(fixed_digits=2):month>',
                 '<int(fixed_digits=2):day>',
-                '<slug>!<ref>',
+                '<slug>!<git_ref:ref>',
             ]
         ),
         'page_archive_view',
         page_archive_view
     )
     gitpages_web_ui.add_url_rule(
-        '/page/<slug>!<ref>',
-        'page_view',
-        page_view
+        '/' + '/'.join(
+            [
+                'page',
+                '<int(fixed_digits=4):year>',
+                '<int(fixed_digits=2):month>',
+                '<int(fixed_digits=2):day>',
+                '<slug>',
+            ]
+        ),
+        'page_archive_view',
+        page_archive_view,
+        defaults={
+            'ref': u'master',
+        },
     )
 
     repo = Repo('repo.git')
@@ -53,17 +64,10 @@ def page_archive_view(year, month, day, slug, ref):
 
     page = g.gitpages.page(datetime(year, month, day), slug, ref)
 
-    return page_view_page(page)
+    return page_view(page)
 
 
-def page_view(slug, ref):
-
-    page = api.page(slug, ref)
-
-    return page_view_page(page)
-
-
-def page_view_page(page):
+def page_view(page):
 
     from yaml import dump
     from pygments import highlight
