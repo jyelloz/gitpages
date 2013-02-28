@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from flask import Blueprint, g
+from werkzeug.exceptions import NotFound
 from datetime import datetime
 
-from . import api, schema
+from .exceptions import PageNotFound
+from .schema import ByDate, PageHistory
+from .api import GitPages
 
 
 def create_blueprint():
@@ -64,9 +67,13 @@ def create_blueprint():
 
 def page_archive_view(year, month, day, slug, ref):
 
-    page = g.gitpages.page(datetime(year, month, day), slug, ref)
+    try:
 
-    return page_view(page)
+        page = g.gitpages.page(datetime(year, month, day), slug, ref)
+        return page_view(page)
+
+    except PageNotFound:
+        raise NotFound()
 
 
 def page_view(page):

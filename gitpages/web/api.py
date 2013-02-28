@@ -4,20 +4,7 @@ from datetime import datetime, timedelta
 
 from whoosh.query import Term, DateRange
 
-
-class PageNotFound(Exception):
-
-    def __init__(self, date, slug, ref):
-
-        super(PageNotFound, self).__init__()
-
-        self.date = date
-        self.slug = slug
-        self.ref = ref
-
-    def __unicode__(self):
-
-        return u'PageNotFound[%r, %r, %r]' % (self.date, self.slug, self.ref)
+from .exceptions import PageNotFound
 
 
 class Page(object):
