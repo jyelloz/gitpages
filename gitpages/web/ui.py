@@ -1,6 +1,4 @@
 from flask import Blueprint, g
-from flask_failsafe import failsafe
-
 from datetime import datetime
 
 from . import api, schema
