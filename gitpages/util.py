@@ -7,13 +7,43 @@ http://flask.pocoo.org/snippets/5/
 
 import re
 from unidecode import unidecode
+from functools import wraps
+from werkzeug.contrib.cache import SimpleCache
 
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
 
 
 def slugify(text, delim=u'-'):
     """Generates an ASCII-only slug."""
+
     result = []
+
     for word in _punct_re.split(text.lower()):
         result.extend(unidecode(word).split())
+
     return unicode(delim.join(result))
+
+
+_cache = SimpleCache()
+
+
+def cached(key, timeout=5 * 60):
+
+    def decorator(f):
+
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+
+            cache_key = key % kwargs['blob_id']
+
+            cached_value = _cache.get(cache_key)
+            if cached_value is not None:
+                return cached_value
+
+            value = f(*args, **kwargs)
+            _cache.set(cache_key, value, timeout=timeout)
+            return value
+
+        return decorated_function
+
+    return decorator
