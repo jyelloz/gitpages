@@ -33,7 +33,7 @@ def load_page_data(repository, page_tree):
 
     page_rst_blob = repository.get_blob(page_rst.sha)
 
-    return page_rst_blob.data, load_page_attachments(repository, page_tree)
+    return page_rst_blob, load_page_attachments(repository, page_tree)
 
 
 def load_page_attachments(repository, page_tree):

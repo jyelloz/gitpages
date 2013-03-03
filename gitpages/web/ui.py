@@ -3,16 +3,19 @@
 from flask import Blueprint, g
 from werkzeug.exceptions import NotFound
 from datetime import datetime
+from pytz import timezone
 
 from .exceptions import PageNotFound
 from .schema import ByDate, PageHistory
 from .api import GitPages
+from ..indexer import build_date_index
 
 
 def create_blueprint():
 
     from dulwich.repo import Repo
-    from whoosh import ramindex
+    from whoosh import index
+    from whoosh.query import Every
 
     gitpages_web_ui = Blueprint('gitpages_web_ui', __name__)
 
@@ -42,17 +45,57 @@ def create_blueprint():
         'page_archive_view',
         page_archive_view,
         defaults={
-            'ref': u'master',
+            'ref': u'refs/heads/realposts',
         },
     )
 
-    repo = Repo('repo.git')
+    repo = Repo('database')
 
-    date_index = ramindex.RamIndex(ByDate())
-    history_index = ramindex.RamIndex(PageHistory())
+    index_dir = 'index'
+    try:
+        from os import makedirs
+        makedirs(index_dir)
+    except:
+        from os.path import isdir
+
+        if not isdir(index_dir):
+            raise
+
+    bydate_schema = ByDate()
+    pagehistory_schema = PageHistory()
+
+    if index.exists_in(index_dir, 'by_date'):
+        date_index = index.open_dir(
+            index_dir,
+            indexname='by_date',
+        )
+    else:
+        date_index = index.create_in(
+            index_dir,
+            schema=bydate_schema,
+            indexname='by_date',
+        )
+
+    if index.exists_in(index_dir, 'page_history'):
+        history_index = index.open_dir(
+            index_dir,
+            indexname='page_history',
+        )
+    else:
+        history_index = index.create_in(
+            index_dir,
+            schema=pagehistory_schema,
+            indexname='page_history',
+        )
+
+    date_index.delete_by_query(Every())
+    build_date_index(date_index, repo, 'refs/heads/realposts')
+
+    los_angeles_tz = timezone('America/Los_Angeles')
 
     @gitpages_web_ui.before_request
     def setup_gitpages():
+        g.timezone = los_angeles_tz
         g.gitpages = GitPages(repo, date_index, history_index)
 
     @gitpages_web_ui.teardown_request
@@ -72,7 +115,8 @@ def page_archive_view(year, month, day, slug, ref):
 
     try:
 
-        page = g.gitpages.page(datetime(year, month, day), slug, ref)
+        date = g.timezone.localize(datetime(year, month, day))
+        page = g.gitpages.page(date, slug, ref)
         return page_view(page)
 
     except PageNotFound:
@@ -81,20 +125,17 @@ def page_archive_view(year, month, day, slug, ref):
 
 def page_view(page):
 
-    from yaml import dump
-    from pygments import highlight
-    from pygments.lexers import YamlLexer
     from flask import render_template_string
 
-    page_yaml = dump(page)
-
-    page_html = highlight(page_yaml, YamlLexer(), _HTML_FORMATTER)
+    doc = page.doc()
+    html_body = doc['html_body']
+    title = doc['title']
 
     html = render_template_string(
         _PAGE_TEMPLATE,
-        title='Page#%s,%s' % (page.slug, page.ref),
+        title=title,
         style_css=_STYLE_CSS,
-        code_html=page_html,
+        html_body=html_body,
     )
 
     return (
@@ -116,9 +157,7 @@ _PAGE_TEMPLATE = u'''\
         </style>
     </head>
     <body class="highlight">
-        <div>
-            <code>{{ code_html }}</code>
-        </div>
+        {{ html_body }}
     </body>
 </html>
 '''

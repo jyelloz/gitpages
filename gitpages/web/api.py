@@ -1,18 +1,23 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from datetime import datetime, timedelta
+from functools import partial
 
 from whoosh.query import Term, DateRange
 
 from .exceptions import PageNotFound
 
 
+_log = logging.getLogger(__name__)
+
+
 class Page(object):
 
-    def __init__(self, slug, ref, text):
+    def __init__(self, slug, ref, doc):
         self.slug = slug
         self.ref = ref
-        self.text = text
+        self.doc = doc
 
 
 class GitPages(object):
@@ -42,15 +47,22 @@ class GitPages(object):
 
         with self._date_index.searcher() as s:
 
-            results = s.search(query, limit=1)
+            results = s.search(query)
 
             if results.is_empty():
+                _log.debug('results is empty')
                 raise PageNotFound(date, slug, ref)
 
             page_result = results[0]
-            blob = self._repo.get_blob(page_result.blob_id)
 
-            return Page(slug, ref, blob)
+            def get_blob(blob_id):
+                return self._repo.get_blob(blob_id)
+
+            blob = get_blob(blob_id=page_result['blob_id'])
+
+            parts = partial(render_page_content, blob)
+
+            return Page(slug, ref, parts)
 
     def history(self, page):
         return page_history(page.slug)
@@ -72,6 +84,15 @@ class GitPages(object):
             self._history_index.close()
         except:
             pass
+
+
+def render_page_content(blob):
+    from docutils.core import publish_parts
+
+    return publish_parts(
+        source=blob.data,
+        writer_name='html',
+    )
 
 
 def page_history(page_pk):

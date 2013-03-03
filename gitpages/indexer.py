@@ -1,4 +1,11 @@
+# -*- coding: utf-8 -*-
+
+from logging import getLogger as get_logger
+
 from .storage.git import find_pages, get_pages_tree
+
+
+_log = get_logger(__name__)
 
 
 def build_date_index(index, repo, ref='HEAD'):
@@ -14,22 +21,23 @@ def build_date_index(index, repo, ref='HEAD'):
 
     for page, attachments in pages:
 
-        doctree = read_page_rst(page)
+        doctree = read_page_rst(page.data)
         title = get_title(doctree)
         docinfo = get_docinfo_as_dict(doctree)
 
         slug = slugify(title)
-
-        print 'title is %r, slug is %r' % (title, slug)
+        date = parse_date(docinfo['date'])
+        status = docinfo['status']
+        blob_id = unicode(page.id)
 
         w.add_document(
-            date=parse_date(docinfo['date']),
-            slug=slugify(title),
+            date=date,
+            slug=slug,
             title=unicode(title),
             ref_id=unicode(ref),
-            # TODO: add support for these
-            blob_id=None,
-            blob_id__ref_id=None,
+            status=unicode(status),
+            blob_id=blob_id,
+            blob_id__ref_id=(blob_id, ref),
         )
 
     w.commit()
