@@ -128,6 +128,7 @@ def page_view(page):
     from flask import render_template_string
 
     doc = page.doc()
+
     html_body = doc['html_body']
     title = doc['title']
 

@@ -27,14 +27,17 @@ def slugify(text, delim=u'-'):
 _cache = SimpleCache()
 
 
-def cached(key, timeout=5 * 60):
+def cached(key, key_builder=None, timeout=5 * 60):
 
     def decorator(f):
 
         @wraps(f)
         def decorated_function(*args, **kwargs):
 
-            cache_key = key % kwargs['blob_id']
+            if key_builder:
+                cache_key = key % key_builder(args[0])
+            else:
+                cache_key = key % args[0]
 
             cached_value = _cache.get(cache_key)
             if cached_value is not None:

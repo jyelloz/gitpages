@@ -14,9 +14,10 @@ _log = logging.getLogger(__name__)
 
 class Page(object):
 
-    def __init__(self, slug, ref, doc):
+    def __init__(self, slug, ref, blob_id, doc):
         self.slug = slug
         self.ref = ref
+        self.blob_id = blob_id
         self.doc = doc
 
 
@@ -58,11 +59,12 @@ class GitPages(object):
             def get_blob(blob_id):
                 return self._repo.get_blob(blob_id)
 
-            blob = get_blob(blob_id=page_result['blob_id'])
+            blob_id = page_result['blob_id']
+            blob = get_blob(blob_id)
 
             parts = partial(render_page_content, blob)
 
-            return Page(slug, ref, parts)
+            return Page(slug, ref, blob_id, parts)
 
     def history(self, page):
         return page_history(page.slug)
