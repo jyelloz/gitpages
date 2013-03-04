@@ -3,6 +3,7 @@
 import logging
 from datetime import datetime, timedelta
 from functools import partial
+from collections import namedtuple
 
 from whoosh.query import Term, DateRange
 
@@ -10,6 +11,19 @@ from .exceptions import PageNotFound
 
 
 _log = logging.getLogger(__name__)
+
+
+PageInfo = namedtuple(
+    'PageInfo',
+    'date slug ref title status blob_id',
+)
+
+PageInfo.to_url = lambda self: '/page/%04d/%02d/%02d/%s' % (
+    self.date.year,
+    self.date.month,
+    self.date.day,
+    self.slug,
+)
 
 
 class Page(object):
@@ -24,6 +38,7 @@ class Page(object):
 class GitPages(object):
 
     _max_timedelta = timedelta(days=1)
+    _default_statuses = frozenset(u'published')
 
     def __init__(self, repo, date_index, history_index):
         self._repo = repo
@@ -74,6 +89,31 @@ class GitPages(object):
 
     def newer_pages(self, page):
         pass
+
+    def index(self, page_number, ref, page_length=10):
+
+        query = Term('status', u'published')
+
+        with self._date_index.searcher() as s:
+
+            results = s.search_page(
+                query,
+                pagenum=page_number,
+                pagelen=page_length,
+                sortedby='date',
+                reverse=True,
+            )
+
+            return [
+                PageInfo(
+                    date=r['date'],
+                    slug=r['slug'],
+                    ref=r['ref_id'],
+                    title=r['title'],
+                    status=r['status'],
+                    blob_id=r['blob_id'],
+                ) for r in results
+            ]
 
     def teardown(self):
 

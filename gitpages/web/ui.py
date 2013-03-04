@@ -20,6 +20,16 @@ def create_blueprint():
     gitpages_web_ui = Blueprint('gitpages_web_ui', __name__)
 
     gitpages_web_ui.add_url_rule(
+        '/',
+        'index_view',
+        index_view,
+        defaults={
+            'page_number': 1,
+            'ref': u'refs/heads/realposts',
+        },
+    )
+
+    gitpages_web_ui.add_url_rule(
         '/' + '/'.join(
             [
                 'page',
@@ -111,6 +121,35 @@ def create_blueprint():
     return gitpages_web_ui
 
 
+def index_view(page_number, ref):
+
+    from flask import render_template_string
+
+    results = g.gitpages.index(page_number, ref)
+
+    title = 'Index'
+
+    index_list = render_template_string(
+        _INDEX_LIST_TEMPLATE,
+        index=results,
+    )
+
+    html = render_template_string(
+        _PAGE_TEMPLATE,
+        title=title,
+        style_css=_STYLE_CSS,
+        html_body=index_list
+    )
+
+    return (
+        html,
+        200,
+        {
+            'Content-Type': 'text/html; charset=utf-8',
+        },
+    )
+
+
 def page_archive_view(year, month, day, slug, ref):
 
     try:
@@ -161,6 +200,14 @@ _PAGE_TEMPLATE = u'''\
         {{ html_body }}
     </body>
 </html>
+'''
+
+_INDEX_LIST_TEMPLATE = r'''
+<ul>
+{% for page_info in index %}
+    <li><a href="{{ page_info.to_url() }}">{{ page_info.title }}</a></li>
+{% endfor %}
+</ul>
 '''
 
 
