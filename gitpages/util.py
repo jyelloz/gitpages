@@ -10,7 +10,7 @@ from unidecode import unidecode
 from functools import wraps
 from werkzeug.contrib.cache import SimpleCache
 
-_punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
+_punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.;]+')
 
 
 def slugify(text, delim=u'-'):
