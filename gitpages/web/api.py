@@ -9,6 +9,7 @@ from flask import url_for
 from whoosh.query import Term, DateRange
 
 from .exceptions import PageNotFound
+from ..util import cached
 
 
 _log = logging.getLogger(__name__)
@@ -70,6 +71,7 @@ class GitPages(object):
 
             page_result = results[0]
 
+            @cached(key='blob/%s')
             def get_blob(blob_id):
                 return self._repo.get_blob(blob_id)
 
