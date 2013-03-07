@@ -1,6 +1,7 @@
 bpython
 docutils
 dulwich
+ez_setup
 Flask
 Flask-Failsafe
 Flask-Script
@@ -9,6 +10,7 @@ msgpack-python
 Pygments
 pytz
 PyYAML
+titlecase
 typogrify
 Unidecode
 Whoosh
