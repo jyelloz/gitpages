@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from functools import partial
 from collections import namedtuple
 
+from flask import url_for
 from whoosh.query import Term, DateRange
 
 from .exceptions import PageNotFound
@@ -18,11 +19,12 @@ PageInfo = namedtuple(
     'date slug ref title status blob_id',
 )
 
-PageInfo.to_url = lambda self: '/page/%04d/%02d/%02d/%s/' % (
-    self.date.year,
-    self.date.month,
-    self.date.day,
-    self.slug,
+PageInfo.to_url = lambda self: url_for(
+    '.page_archive_view',
+    year=self.date.year,
+    month=self.date.month,
+    day=self.date.day,
+    slug=self.slug,
 )
 
 
