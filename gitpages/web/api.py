@@ -26,13 +26,10 @@ PageInfo.to_url = lambda self: '/page/%04d/%02d/%02d/%s/' % (
 )
 
 
-class Page(object):
-
-    def __init__(self, slug, ref, blob_id, doc):
-        self.slug = slug
-        self.ref = ref
-        self.blob_id = blob_id
-        self.doc = doc
+Page = namedtuple(
+    'Page',
+    'slug ref blob_id doc',
+)
 
 
 class GitPages(object):
@@ -79,7 +76,12 @@ class GitPages(object):
 
             parts = partial(render_page_content, blob)
 
-            return Page(slug, ref, blob_id, parts)
+            return Page(
+                slug=slug,
+                ref=ref,
+                blob_id=blob_id,
+                doc=parts,
+            )
 
     def history(self, page):
         return page_history(page.slug)
