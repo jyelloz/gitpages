@@ -18,7 +18,7 @@ PageInfo = namedtuple(
     'date slug ref title status blob_id',
 )
 
-PageInfo.to_url = lambda self: '/page/%04d/%02d/%02d/%s' % (
+PageInfo.to_url = lambda self: '/page/%04d/%02d/%02d/%s/' % (
     self.date.year,
     self.date.month,
     self.date.day,
