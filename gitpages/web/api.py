@@ -6,7 +6,7 @@ from functools import partial
 from collections import namedtuple
 
 from flask import url_for
-from whoosh.query import Term, DateRange
+from whoosh.query import Term, DateRange, Or
 
 from .exceptions import PageNotFound
 from ..util import cached
@@ -38,20 +38,21 @@ Page = namedtuple(
 class GitPages(object):
 
     _max_timedelta = timedelta(days=1)
-    _default_statuses = frozenset(u'published')
+    _default_statuses = frozenset((u'published',))
 
     def __init__(self, repo, date_index, history_index):
         self._repo = repo
         self._date_index = date_index
         self._history_index = history_index
 
-    def page(self, date, slug, ref):
+    def page(self, date, slug, ref, statuses=_default_statuses):
 
         earliest = datetime(date.year, date.month, date.day)
         latest = earliest + GitPages._max_timedelta
 
         query = (
             Term('slug', unicode(slug)) &
+            Or(Term('status', s) for s in statuses) &
             DateRange(
                 'date',
                 start=earliest,
