@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from datetime import datetime
+
 from flask import Blueprint, g
 from werkzeug.exceptions import NotFound
-from datetime import datetime
 from pytz import timezone
 
 from .exceptions import PageNotFound
@@ -17,7 +18,11 @@ def create_blueprint():
     from whoosh import index
     from whoosh.query import Every
 
-    gitpages_web_ui = Blueprint('gitpages_web_ui', __name__)
+    gitpages_web_ui = Blueprint(
+        'gitpages_web_ui',
+        __name__,
+        template_folder='templates',
+    )
 
     gitpages_web_ui.add_url_rule(
         '/',
@@ -51,7 +56,7 @@ def create_blueprint():
                 '<int(fixed_digits=2):day>',
                 '<slug>',
             ]
-        ),
+        ) + '/',
         'page_archive_view',
         page_archive_view,
         defaults={
@@ -123,22 +128,17 @@ def create_blueprint():
 
 def index_view(page_number, ref):
 
-    from flask import render_template_string
+    from flask import render_template
 
     results = g.gitpages.index(page_number, ref)
 
     title = 'Index'
 
-    index_list = render_template_string(
-        _INDEX_LIST_TEMPLATE,
-        index=results,
-    )
-
-    html = render_template_string(
-        _PAGE_TEMPLATE,
+    html = render_template(
+        'index.html',
         title=title,
+        index=results,
         style_css=_STYLE_CSS,
-        html_body=index_list
     )
 
     return (
@@ -162,20 +162,25 @@ def page_archive_view(year, month, day, slug, ref):
         raise NotFound()
 
 
+def page_to_key(page):
+    return page.blob_id
+
+
+@cached(key='page/%s', key_builder=page_to_key)
 def page_view(page):
 
-    from flask import render_template_string
+    from flask import render_template
 
     doc = page.doc()
 
-    html_body = doc['html_body']
+    body = doc['body']
     title = doc['title']
 
-    html = render_template_string(
-        _PAGE_TEMPLATE,
+    html = render_template(
+        'page.html',
         title=title,
         style_css=_STYLE_CSS,
-        html_body=html_body,
+        body=body,
     )
 
     return (
@@ -185,30 +190,6 @@ def page_view(page):
             'Content-Type': 'text/html; charset=utf-8',
         },
     )
-
-_PAGE_TEMPLATE = u'''\
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <title>{{ title }}</title>
-        <style type="text/css">
-        {{ style_css }}
-        </style>
-    </head>
-    <body class="highlight">
-        {{ html_body }}
-    </body>
-</html>
-'''
-
-_INDEX_LIST_TEMPLATE = r'''
-<ul>
-{% for page_info in index %}
-    <li><a href="{{ page_info.to_url() }}">{{ page_info.title }}</a></li>
-{% endfor %}
-</ul>
-'''
 
 
 def _build_html_formatter():
