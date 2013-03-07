@@ -37,7 +37,7 @@ def create_blueprint():
     gitpages_web_ui.add_url_rule(
         '/' + '/'.join(
             [
-                'page',
+                'archives',
                 '<int(fixed_digits=4):year>',
                 '<int(fixed_digits=2):month>',
                 '<int(fixed_digits=2):day>',
@@ -50,7 +50,7 @@ def create_blueprint():
     gitpages_web_ui.add_url_rule(
         '/' + '/'.join(
             [
-                'page',
+                'archives',
                 '<int(fixed_digits=4):year>',
                 '<int(fixed_digits=2):month>',
                 '<int(fixed_digits=2):day>',
