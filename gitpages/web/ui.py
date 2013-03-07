@@ -10,6 +10,7 @@ from .exceptions import PageNotFound
 from .schema import ByDate, PageHistory
 from .api import GitPages
 from ..indexer import build_date_index
+from ..util import cached
 
 
 def create_blueprint():
