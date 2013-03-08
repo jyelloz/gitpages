@@ -17,36 +17,40 @@ def get_pages_tree(repository, ref='HEAD'):
     return repository.tree(root['page'][1])
 
 
-def find_pages(repository, pages_tree, visitor=None):
+def find_pages(repository, pages_tree):
 
     page_items = pages_tree.iteritems()
 
     page_tree_shas = (entry.sha for entry in page_items)
     page_trees = (repository.tree(sha) for sha in page_tree_shas)
 
-    return load_page_data(repository, page_trees, visitor)
+    return (
+        (t, find_page_rst_entry(t))
+        for t in page_trees
+    )
 
 
-def load_page_data(repository, page_trees, visitor=None):
-
-    for page_tree in page_trees:
-
-        page_rst = next(
-            i for i in page_tree.iteritems()
-            if i.path == 'page.rst'
+def load_pages_with_attachments(repository, page_trees_with_rst):
+    return (
+        (
+            load_page_data(repository, page_rst_entry),
+            load_page_attachments(repository, page_tree),
         )
+        for (page_tree, page_rst_entry) in page_trees_with_rst
+    )
 
-        page_rst_blob = repository.get_blob(page_rst.sha)
 
-        if visitor:
+def find_page_rst_entry(page_tree):
 
-            visitor(
-                repository=repository,
-                page_tree=page_tree,
-                page_rst_blob=page_rst_blob,
-            )
+    return next(
+        i for i in page_tree.iteritems()
+        if i.path == 'page.rst'
+    )
 
-        yield page_rst_blob, load_page_attachments(repository, page_tree)
+
+def load_page_data(repository, page_rst_entry):
+
+    return repository.get_blob(page_rst_entry.sha)
 
 
 def load_page_attachments(repository, page_tree):

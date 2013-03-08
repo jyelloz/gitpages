@@ -2,7 +2,7 @@
 
 from logging import getLogger as get_logger
 
-from .storage.git import find_pages, get_pages_tree
+from .storage import git as git_storage
 
 
 _log = get_logger(__name__)
@@ -13,13 +13,21 @@ def build_date_index(index, repo, ref='HEAD'):
     from .util import slugify
     from dateutil.parser import parse as parse_date
 
-    pages_tree = get_pages_tree(repo, ref)
+    def visitor(pages):
 
-    pages = find_pages(repo, pages_tree)
+        for page, page_rst_entry in pages:
+            print 'visiting blob %r' % page_rst_entry.sha
+            yield page, page_rst_entry
+
+    pages_tree = git_storage.get_pages_tree(repo, ref)
+
+    pages = git_storage.find_pages(repo, pages_tree)
+    pages_visited = visitor(pages)
+    pages_data = git_storage.load_pages_with_attachments(repo, pages_visited)
 
     w = index.writer()
 
-    for page, attachments in pages:
+    for page, attachments in pages_data:
 
         doctree = read_page_rst(page.data)
         title = get_title(doctree)
