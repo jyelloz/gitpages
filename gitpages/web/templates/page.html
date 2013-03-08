@@ -6,7 +6,23 @@
 {% endblock heading %}
 
 {% block content -%}
+
+  <div>
+
+    {% if page_prev %}
+      <a href="{{ page_prev.to_url() }}">&laquo; {{ page_prev.title }}</a>
+    {% endif %}
+
+    {% if page_prev and page_next %} | {% endif %}
+
+    {% if page_next %}
+      <a href="{{ page_next.to_url() }}">{{ page_next.title }} &raquo;</a>
+    {% endif %}
+
+  </div>
+
   {{ body|safe }}
+
 {%- endblock content %}
 
 <!-- vim: set ft=jinja ts=2 sts=2 sw=2 et : -->
