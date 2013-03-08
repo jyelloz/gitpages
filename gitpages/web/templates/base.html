@@ -2,7 +2,7 @@
 <html>
 
   <head>
-    <title>{% block page_title %}{{ title|smartypants }}{% endblock %}</title>
+    <title>{% block page_title %}{{ title|smartypants }}{% endblock page_title %}</title>
     <link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,400italic,700italic|Source+Code+Pro:400,700"
           rel="stylesheet"
           type="text/css" />
@@ -21,12 +21,13 @@
   <body>
 
     {% block heading -%}
-      <h1>{{ title|typogrify }}</h1>
-    {%- endblock %}
+      <h1><a href="{{ home_url }}">Home</a></h1>
+      <h2>{{ title|typogrify }}</h2>
+    {%- endblock heading %}
 
     {% block content -%}
       {{ body }}
-    {%- endblock %}
+    {%- endblock content %}
 
   </body>
 

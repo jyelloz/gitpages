@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from flask import Blueprint, g
+from flask import Blueprint, g, url_for
 from werkzeug.exceptions import NotFound
 from pytz import timezone
 
@@ -179,6 +179,7 @@ def page_view(page):
 
     html = render_template(
         'page.html',
+        home_url=url_for('.index_view'),
         title=title,
         style_css=_STYLE_CSS,
         body=body,
@@ -196,8 +197,8 @@ def page_view(page):
 
 def _build_html_formatter():
     from pygments.formatters import HtmlFormatter
-    html_formatter = HtmlFormatter(style='monokai')
-    style_css = html_formatter.get_style_defs('.highlight')
+    html_formatter = HtmlFormatter(style='bw')
+    style_css = html_formatter.get_style_defs('.code')
 
     return html_formatter, style_css
 

@@ -149,7 +149,7 @@ def render_page_content(blob):
         source=blob.data,
         writer_name='html',
         settings_overrides={
-            'initial_header_level': 2,
+            'initial_header_level': 3,
             'syntax_highlight': 'short',
             'smart_quotes': True,
         },

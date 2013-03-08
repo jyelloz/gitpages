@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 
+{% block heading %}
+  <h1><a href="{{ home_url }}">Home</a></h1>
+  <h2><a href="{{ page.to_url() }}">{{ title|typogrify }}</a></h2>
+{% endblock heading %}
+
 {% block content -%}
   {{ body|safe }}
-{%- endblock %}
+{%- endblock content %}
 
 <!-- vim: set ft=jinja ts=2 sts=2 sw=2 et : -->
