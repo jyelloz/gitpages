@@ -164,7 +164,7 @@ def page_archive_view(year, month, day, slug, ref):
 
 
 def page_to_key(page):
-    return page.blob_id
+    return page.info.blob_id
 
 
 @cached(key='page/%s', key_builder=page_to_key)
