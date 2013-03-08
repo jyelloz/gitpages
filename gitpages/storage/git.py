@@ -31,9 +31,10 @@ def load_page_data(repository, page_trees, visitor=None):
 
     for page_tree in page_trees:
 
-        page_rst = [
-            i for i in page_tree.iteritems() if i.path == 'page.rst'
-        ].pop()
+        page_rst = next(
+            i for i in page_tree.iteritems()
+            if i.path == 'page.rst'
+        )
 
         page_rst_blob = repository.get_blob(page_rst.sha)
 
@@ -52,19 +53,13 @@ def load_page_attachments(repository, page_tree):
 
     def load_page_attachment(attachment_tree):
 
-        metadata_rst = iterable_nth(
-            (
-                i for i in attachment_tree.iteritems()
-                if i.path == 'metadata.rst'
-            ),
-            0,
+        metadata_rst = next(
+            i for i in attachment_tree.iteritems()
+            if i.path == 'metadata.rst'
         )
-        data = iterable_nth(
-            (
-                i for i in attachment_tree.iteritems()
-                if i.path == 'data'
-            ),
-            0,
+        data = next(
+            i for i in attachment_tree.iteritems()
+            if i.path == 'data'
         )
 
         metadata = repository.get_blob(metadata_rst.sha).data
