@@ -182,6 +182,7 @@ def page_view(page):
         title=title,
         style_css=_STYLE_CSS,
         body=body,
+        page=page,
     )
 
     return (

@@ -31,8 +31,10 @@ PageInfo.to_url = lambda self: url_for(
 
 Page = namedtuple(
     'Page',
-    'slug ref blob_id doc',
+    'info doc',
 )
+
+Page.to_url = lambda self: self.info.to_url()
 
 
 class GitPages(object):
@@ -82,9 +84,14 @@ class GitPages(object):
             parts = partial(render_page_content, blob)
 
             return Page(
-                slug=slug,
-                ref=ref,
-                blob_id=blob_id,
+                info=PageInfo(
+                    slug=slug,
+                    ref=ref,
+                    blob_id=blob_id,
+                    date=page_result['date'],
+                    title=page_result['title'],
+                    status=page_result['status'],
+                ),
                 doc=parts,
             )
 
