@@ -4,7 +4,7 @@
 
 <ul>
 {% for page_info in index %}
-  <li><a href="{{ page_info.to_url() }}">{{ page_info.title }}</a></li>
+  <li><a href="{{ page_info.to_url() }}">{{ page_info.title|smartypants }}</a></li>
 {% endfor %}
 </ul>
 
