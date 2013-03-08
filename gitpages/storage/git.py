@@ -67,12 +67,9 @@ def load_page_attachments(repository, page_tree):
 
         return metadata, data_callable
 
-    attachments = iterable_nth(
-        (
-            i for i in page_tree.iteritems()
-            if i.path == 'attachment'
-        ),
-        0,
+    attachments = next(
+        i for i in page_tree.iteritems()
+        if i.path == 'attachment'
     )
 
     if attachments is None:
