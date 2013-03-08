@@ -47,6 +47,26 @@ class GitPages(object):
         self._date_index = date_index
         self._history_index = history_index
 
+    @staticmethod
+    def _load_page_info(result):
+
+        return PageInfo(
+            slug=result['slug'],
+            ref=result['ref_id'],
+            blob_id=result['blob_id'],
+            date=result['date'],
+            title=result['title'],
+            status=result['status'],
+        )
+
+    @staticmethod
+    def _load_page(result, parts):
+
+        return Page(
+            info=GitPages._load_page_info(result),
+            doc=parts,
+        )
+
     def page(self, date, slug, ref, statuses=_default_statuses):
 
         earliest = datetime(date.year, date.month, date.day)
@@ -83,30 +103,25 @@ class GitPages(object):
 
             parts = partial(render_page_content, blob)
 
-            return Page(
-                info=PageInfo(
-                    slug=slug,
-                    ref=ref,
-                    blob_id=blob_id,
-                    date=page_result['date'],
-                    title=page_result['title'],
-                    status=page_result['status'],
-                ),
-                doc=parts,
-            )
+            return GitPages._load_page(page_result, parts)
 
     def history(self, page):
         return page_history(page.slug)
 
-    def older_pages(self, page):
-        pass
+    def older_pages(self, page, page_number, ref, page_length=10):
 
-    def newer_pages(self, page):
-        pass
+        latest = page.info.date
 
-    def index(self, page_number, ref, page_length=10):
-
-        query = Term('status', u'published')
+        query = (
+            Or(Term('status', s) for s in GitPages._default_statuses) &
+            DateRange(
+                'date',
+                start=None,
+                end=latest,
+                startexcl=False,
+                endexcl=True,
+            )
+        )
 
         with self._date_index.searcher() as s:
 
@@ -119,14 +134,57 @@ class GitPages(object):
             )
 
             return [
-                PageInfo(
-                    date=r['date'],
-                    slug=r['slug'],
-                    ref=r['ref_id'],
-                    title=r['title'],
-                    status=r['status'],
-                    blob_id=r['blob_id'],
-                ) for r in results
+                GitPages._load_page_info(r)
+                for r in results
+            ]
+
+    def newer_pages(self, page, page_number, ref, page_length=10):
+
+        earliest = page.info.date
+
+        query = (
+            Or(Term('status', s) for s in GitPages._default_statuses) &
+            DateRange(
+                'date',
+                start=earliest,
+                end=None,
+                startexcl=True,
+                endexcl=False,
+            )
+        )
+
+        with self._date_index.searcher() as s:
+
+            results = s.search_page(
+                query,
+                pagenum=page_number,
+                pagelen=page_length,
+                sortedby='date',
+                reverse=False,
+            )
+
+            return [
+                GitPages._load_page_info(r)
+                for r in results
+            ]
+
+    def index(self, page_number, ref, page_length=10):
+
+        query = Or(Term('status', s) for s in GitPages._default_statuses)
+
+        with self._date_index.searcher() as s:
+
+            results = s.search_page(
+                query,
+                pagenum=page_number,
+                pagelen=page_length,
+                sortedby='date',
+                reverse=True,
+            )
+
+            return [
+                GitPages._load_page_info(r)
+                for r in results
             ]
 
     def teardown(self):
