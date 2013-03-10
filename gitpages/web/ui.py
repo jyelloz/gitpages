@@ -149,7 +149,6 @@ def index_view(page_number, ref):
         title=title,
         index=results,
         style_css=_STYLE_CSS,
-        STATIC_URL=_STATIC_URL,
     )
 
     return (
@@ -204,7 +203,6 @@ def page_view(page):
         home_url=url_for('.index_view'),
         title=title,
         style_css=_STYLE_CSS,
-        STATIC_URL=_STATIC_URL,
         body=body,
         page=page,
         page_prev=next(iter(older), None),
@@ -230,4 +228,3 @@ def _build_html_formatter():
     return html_formatter, style_css
 
 _HTML_FORMATTER, _STYLE_CSS = _build_html_formatter()
-_STATIC_URL = '/static'
