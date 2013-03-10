@@ -16,10 +16,11 @@ def create():
     application = Flask(__name__)
     application.url_map.converters['git_ref'] = GitRefConverter
     application.url_map.converters['uuid'] = UuidConverter
+    application.config.from_object('config')
 
     register_typogrify(application.jinja_env)
 
-    gitpages_web_ui = ui.create_blueprint()
+    gitpages_web_ui = ui.create_blueprint(application.config)
     application.register_blueprint(gitpages_web_ui)
 
     return application

@@ -12,9 +12,8 @@ from .api import GitPages
 from ..indexer import build_date_index
 
 
-def create_blueprint():
+def create_blueprint(config):
 
-    from dulwich.repo import Repo
     from whoosh import index
     from whoosh.query import Every
 
@@ -64,7 +63,7 @@ def create_blueprint():
         },
     )
 
-    repo = Repo('database')
+    repo = config['GITPAGES_REPOSITORY']
 
     index_dir = 'index'
     try:
