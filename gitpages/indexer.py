@@ -23,6 +23,7 @@ def build_date_index(index, repo, ref='HEAD'):
 
     pages = git_storage.find_pages(repo, pages_tree)
     pages_visited = visitor(pages)
+
     pages_data = git_storage.load_pages_with_attachments(repo, pages_visited)
 
     w = index.writer()

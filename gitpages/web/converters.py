@@ -7,6 +7,7 @@ from werkzeug.routing import BaseConverter
 
 
 class GitRefConverter(BaseConverter):
+
     def __init__(self, url_map, *args):
         super(GitRefConverter, self).__init__(url_map)
 
@@ -18,6 +19,7 @@ class GitRefConverter(BaseConverter):
 
 
 class UuidConverter(BaseConverter):
+
     def __init__(self, url_map, *args):
         super(UuidConverter, self).__init__(url_map)
 
