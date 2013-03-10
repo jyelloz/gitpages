@@ -92,12 +92,8 @@ class GitPages(object):
 
         page_result = results[0]
 
-        @cached(key='blob/%s')
-        def get_blob(blob_id):
-            return self._repo.get_blob(blob_id)
-
         blob_id = page_result['blob_id']
-        blob = get_blob(blob_id)
+        blob = self._repo.get_blob(blob_id)
 
         parts = partial(render_page_content, blob)
 
