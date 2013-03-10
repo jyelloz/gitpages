@@ -179,7 +179,9 @@ class GitPages(object):
         pass
 
 
+@cached(key='page/%s', key_builder=lambda blob: blob.id)
 def render_page_content(blob):
+
     from docutils.core import publish_parts
 
     return publish_parts(
