@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block page_title -%}
+  {{ title|typogrify }} &mdash; {{ super() }}
+{%- endblock page_title %}
+
 {% block heading %}
   {{ super() }}
   <h2><a href="{{ page.to_url() }}">{{ title|typogrify }}</a></h2>

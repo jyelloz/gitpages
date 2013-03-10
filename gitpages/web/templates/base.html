@@ -2,9 +2,13 @@
 <html>
 
   <head>
-    <title>{% block page_title %}{{ title|smartypants }}{% endblock page_title %}</title>
+    <title>
+      {%- block page_title -%}
+        {{ config.SITE_TITLE|smartypants }}
+      {%- endblock page_title -%}
+    </title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-    {% block head_extra %}{% endblock head_extra %}
+    {%- block head_extra %}{% endblock head_extra %}
   </head>
 
   <body>
