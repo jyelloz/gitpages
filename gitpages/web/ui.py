@@ -112,17 +112,25 @@ def create_blueprint():
     @gitpages_web_ui.before_request
     def setup_gitpages():
         g.timezone = los_angeles_tz
-        g.gitpages = GitPages(repo, date_index, history_index)
+        g.date_searcher = date_index.searcher()
+        g.history_searcher = history_index.searcher()
+        g.gitpages = GitPages(repo, g.date_searcher, g.history_searcher)
 
     @gitpages_web_ui.teardown_request
     def teardown_gitpages(exception=None):
 
         gitpages = getattr(g, 'gitpages', None)
+        date_searcher = getattr(g, 'date_searcher', None)
+        history_searcher = getattr(g, 'history_searcher', None)
 
-        if not gitpages:
-            return
+        if gitpages is not None:
+            gitpages.teardown()
 
-        gitpages.teardown()
+        if date_searcher is not None:
+            date_searcher.close()
+
+        if history_searcher is not None:
+            history_searcher.close()
 
     return gitpages_web_ui
 
@@ -175,6 +183,18 @@ def page_view(page):
     from flask import render_template
 
     doc = page.doc()
+    older = g.gitpages.older_pages(
+        page,
+        ref=page.info.ref,
+        page_number=1,
+        page_length=1,
+    )
+    newer = g.gitpages.newer_pages(
+        page,
+        ref=page.info.ref,
+        page_number=1,
+        page_length=1,
+    )
 
     body = doc['body']
     title = doc['title']
