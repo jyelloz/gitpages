@@ -84,9 +84,7 @@ class GitPages(object):
             )
         )
 
-        s = self._date_searcher
-
-        results = s.search(query)
+        results = self._date_searcher.search(query)
 
         if results.is_empty():
             _log.debug('results is empty')
@@ -123,9 +121,7 @@ class GitPages(object):
             )
         )
 
-        s = self._date_searcher
-
-        results = s.search_page(
+        results = self._date_searcher.search_page(
             query,
             pagenum=page_number,
             pagelen=page_length,
@@ -153,9 +149,7 @@ class GitPages(object):
             )
         )
 
-        s = self._date_searcher
-
-        results = s.search_page(
+        results = self._date_searcher.search_page(
             query,
             pagenum=page_number,
             pagelen=page_length,
@@ -172,9 +166,7 @@ class GitPages(object):
 
         query = Or(Term('status', s) for s in GitPages._default_statuses)
 
-        s = self._date_searcher
-
-        results = s.search_page(
+        results = self._date_searcher.search_page(
             query,
             pagenum=page_number,
             pagelen=page_length,
