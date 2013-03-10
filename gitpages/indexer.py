@@ -49,7 +49,7 @@ def build_date_index(index, repo, ref='HEAD'):
             blob_id__ref_id=(blob_id, ref),
         )
 
-    w.commit()
+    w.commit(optimize=True)
 
 
 def read_page_rst(page_rst):
