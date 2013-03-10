@@ -11,7 +11,7 @@
 
     <header>
     {% block heading -%}
-      <h1 class="logo"><a href="{{ home_url }}"><span>Home</span></a></h1>
+      <h1 class="logo"><a href="{{ url_for('.index_view') }}"><span>Home</span></a></h1>
     {%- endblock heading %}
     </header>
 

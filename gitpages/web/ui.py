@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from flask import Blueprint, g, url_for
+from flask import Blueprint, g
 from werkzeug.exceptions import NotFound
 from pytz import timezone
 
@@ -10,7 +10,6 @@ from .exceptions import PageNotFound
 from .schema import ByDate, PageHistory
 from .api import GitPages
 from ..indexer import build_date_index
-from ..util import cached
 
 
 def create_blueprint():
@@ -145,7 +144,6 @@ def index_view(page_number, ref):
 
     html = render_template(
         'index.html',
-        home_url=url_for('.index_view'),
         title=title,
         index=results,
         style_css=_STYLE_CSS,
@@ -176,7 +174,6 @@ def page_to_key(page):
     return page.info.blob_id
 
 
-@cached(key='page/%s', key_builder=page_to_key)
 def page_view(page):
 
     from flask import render_template
@@ -200,7 +197,6 @@ def page_view(page):
 
     html = render_template(
         'page.html',
-        home_url=url_for('.index_view'),
         title=title,
         style_css=_STYLE_CSS,
         body=body,
