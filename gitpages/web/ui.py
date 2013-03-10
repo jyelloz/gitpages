@@ -65,39 +65,41 @@ def create_blueprint(config):
 
     repo = config['GITPAGES_REPOSITORY']
 
-    index_dir = 'index'
+    date_index_path = config['GITPAGES_DATE_INDEX_PATH']
+    history_index_path = config['GITPAGES_HISTORY_INDEX_PATH']
     try:
         from os import makedirs
-        makedirs(index_dir)
+        makedirs(date_index_path)
+        makedirs(history_index_path)
     except:
         from os.path import isdir
 
-        if not isdir(index_dir):
+        if not (isdir(date_index_path) and isdir(history_index_path)):
             raise
 
     bydate_schema = ByDate()
     pagehistory_schema = PageHistory()
 
-    if index.exists_in(index_dir, 'by_date'):
+    if index.exists_in(date_index_path, 'by_date'):
         date_index = index.open_dir(
-            index_dir,
+            date_index_path,
             indexname='by_date',
         )
     else:
         date_index = index.create_in(
-            index_dir,
+            date_index_path,
             schema=bydate_schema,
             indexname='by_date',
         )
 
-    if index.exists_in(index_dir, 'page_history'):
+    if index.exists_in(history_index_path, 'page_history'):
         history_index = index.open_dir(
-            index_dir,
+            history_index_path,
             indexname='page_history',
         )
     else:
         history_index = index.create_in(
-            index_dir,
+            history_index_path,
             schema=pagehistory_schema,
             indexname='page_history',
         )
