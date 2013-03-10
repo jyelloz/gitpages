@@ -137,9 +137,11 @@ def index_view(page_number, ref):
 
     html = render_template(
         'index.html',
+        home_url=url_for('.index_view'),
         title=title,
         index=results,
         style_css=_STYLE_CSS,
+        STATIC_URL=_STATIC_URL,
     )
 
     return (
@@ -182,8 +184,11 @@ def page_view(page):
         home_url=url_for('.index_view'),
         title=title,
         style_css=_STYLE_CSS,
+        STATIC_URL=_STATIC_URL,
         body=body,
         page=page,
+        page_prev=next(iter(older), None),
+        page_next=next(iter(newer), None),
     )
 
     return (
@@ -196,10 +201,13 @@ def page_view(page):
 
 
 def _build_html_formatter():
+
     from pygments.formatters import HtmlFormatter
+
     html_formatter = HtmlFormatter(style='bw')
     style_css = html_formatter.get_style_defs('.code')
 
     return html_formatter, style_css
 
 _HTML_FORMATTER, _STYLE_CSS = _build_html_formatter()
+_STATIC_URL = '/static'

@@ -3,27 +3,17 @@
 
   <head>
     <title>{% block page_title %}{{ title|smartypants }}{% endblock page_title %}</title>
-    <link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,400italic,700italic|Source+Code+Pro:400,700"
-          rel="stylesheet"
-          type="text/css" />
-    <style type="text/css">
-      * {
-        font-family: 'Source Sans Pro', sans-serif;
-      }
-      code,   pre,   tt,
-      code *, pre *, tt * {
-        font-family: 'Source Code Pro', monospace;
-      }
-      {{ style_css }}
-    </style>
+    <link rel="stylesheet" href="{{ STATIC_URL }}/style.css" />
+    {% block head_extra %}{% endblock head_extra %}
   </head>
 
   <body>
 
+    <header>
     {% block heading -%}
-      <h1><a href="{{ home_url }}">Home</a></h1>
-      <h2>{{ title|typogrify }}</h2>
+      <h1 class="logo"><a href="{{ home_url }}"><span>Home</span></a></h1>
     {%- endblock heading %}
+    </header>
 
     {% block content -%}
       {{ body }}
