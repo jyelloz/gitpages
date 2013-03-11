@@ -142,11 +142,8 @@ def index_view(page_number, ref):
 
     results = g.gitpages.index(page_number, ref)
 
-    title = 'Index'
-
     html = render_template(
         'index.html',
-        title=title,
         index=results,
         style_css=_STYLE_CSS,
     )
