@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+{% set site_title = config.SITE_TITLE|smartypants -%}
 <html>
 
   <head>
     <title>
       {%- block page_title -%}
-        {{ config.SITE_TITLE|smartypants }}
+        {{ site_title }}
       {%- endblock page_title -%}
     </title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
@@ -15,7 +16,11 @@
 
     <header>
     {% block heading -%}
-      <h1 class="logo"><a href="{{ url_for('.index_view') }}"><span>Home</span></a></h1>
+      <h1 class="logo">
+        <a href="{{ url_for('.index_view') }}">
+          <span>{{ site_title }}</span>
+        </a>
+      </h1>
     {%- endblock heading %}
     </header>
 
