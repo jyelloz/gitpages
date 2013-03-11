@@ -37,7 +37,7 @@ def cached(key, key_builder=None, timeout=5 * 60):
 
             cache = current_app.config['CACHE']
 
-            if key_builder:
+            if callable(key_builder):
                 cache_key = key % key_builder(args[0])
             else:
                 cache_key = key % args[0]
