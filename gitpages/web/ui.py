@@ -209,12 +209,3 @@ def page_view(page):
             'Content-Type': 'text/html; charset=utf-8',
         },
     )
-
-
-def _build_html_formatter():
-
-    from pygments.formatters import HtmlFormatter
-
-    return HtmlFormatter(style='bw')
-
-_HTML_FORMATTER = _build_html_formatter()
