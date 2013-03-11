@@ -112,6 +112,7 @@ def create_blueprint(config):
     @gitpages_web_ui.before_request
     def setup_gitpages():
         g.timezone = los_angeles_tz
+        g.utcnow = datetime.utcnow()
         g.date_searcher = date_index.searcher()
         g.history_searcher = history_index.searcher()
         g.gitpages = GitPages(repo, g.date_searcher, g.history_searcher)
