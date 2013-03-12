@@ -193,10 +193,11 @@ class GitPages(object):
 def render_page_content(blob):
 
     from docutils.core import publish_parts
+    from gitpages.web.rst import GitPagesWriter
 
     return publish_parts(
         source=blob.data,
-        writer_name='html',
+        writer=GitPagesWriter(),
         settings_overrides={
             'initial_header_level': 3,
             'syntax_highlight': 'short',
