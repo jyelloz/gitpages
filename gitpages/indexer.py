@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from logging import getLogger as get_logger
+import logging
 
 from .storage import git as git_storage
 
 
-_log = get_logger(__name__)
+_log = logging.getLogger(__name__)
 
 
 def build_date_index(index, repo, ref='HEAD'):
@@ -16,7 +16,7 @@ def build_date_index(index, repo, ref='HEAD'):
     def visitor(pages):
 
         for page, page_rst_entry in pages:
-            print 'visiting blob %r' % page_rst_entry.sha
+            _log.debug('visiting blob %r', page_rst_entry.sha)
             yield page, page_rst_entry
 
     pages_tree = git_storage.get_pages_tree(repo, ref)
