@@ -2,11 +2,20 @@
 
 {% block content %}
 
-<ul>
-{% for page_info in index %}
-  <li><a href="{{ page_info.to_url() }}">{{ page_info.title|smartypants }}</a></li>
+{% for page_info, doc in index %}
+
+<article {% if loop.first -%}class="first"{%- endif %}>
+  <header>
+    <h2>
+      <a href="{{ page_info.to_url() }}">{{ page_info.title|smartypants }}</a>
+    </h2>
+  </header>
+
+  {{ doc().body|safe }}
+
+</article>
+
 {% endfor %}
-</ul>
 
 {% endblock content %}
 

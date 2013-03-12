@@ -170,9 +170,19 @@ class GitPages(object):
             reverse=True,
         )
 
-        return (
-            GitPages._load_page_info(r)
+        results_blobs = (
+            (r, self._repo.get_blob(r['blob_id']))
             for r in results
+        )
+
+        results_parts = (
+            (r, partial(render_page_content, blob))
+            for r, blob in results_blobs
+        )
+
+        return (
+            GitPages._load_page(r, parts)
+            for r, parts in results_parts
         )
 
     def teardown(self):
