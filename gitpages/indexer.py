@@ -60,7 +60,39 @@ def build_date_index(index, repo, ref='HEAD'):
         raise
 
 
+def build_page_history_index(index, repo, ref='HEAD'):
+
+    from datetime import datetime
+    from dateutil.tz import tzoffset
+
+    from dulwich.walk import Walker
+
+    head = repo.ref(ref)
+
+    walker = Walker(repo.object_store, [head])
+
+    w = index.writer()
+
+    try:
+
+        for entry in walker:
+
+            c = entry.commit
+
+            commit_time = datetime.fromtimestamp(
+                c.commit_time,
+                tzoffset(None, c.commit_timezone),
+            )
+
+        w.commit(optimize=True)
+
+    except:
+        w.cancel()
+        raise
+
+
 def read_page_rst(page_rst):
+
     from docutils.core import publish_doctree
 
     return publish_doctree(page_rst)
