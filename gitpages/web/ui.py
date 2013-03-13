@@ -65,44 +65,38 @@ def create_blueprint(config):
 
     repo = config['GITPAGES_REPOSITORY']
 
-    date_index_path = config['GITPAGES_DATE_INDEX_PATH']
-    history_index_path = config['GITPAGES_HISTORY_INDEX_PATH']
-    try:
-        from os import makedirs
-        makedirs(date_index_path)
-        makedirs(history_index_path)
-    except:
-        from os.path import isdir
+    def get_index(index_path, index_name, schema):
 
-        if not (isdir(date_index_path) and isdir(history_index_path)):
-            raise
+        try:
+            from os import makedirs
+            makedirs(index_path)
+        except:
+            from os.path import isdir
+            if not (isdir(index_path)):
+                raise
 
-    bydate_schema = ByDate()
-    pagehistory_schema = PageHistory()
+        if index.exists_in(index_path, index_name):
+            return index.open_dir(
+                index_path,
+                indexname=index_name,
+            )
 
-    if index.exists_in(date_index_path, 'by_date'):
-        date_index = index.open_dir(
-            date_index_path,
-            indexname='by_date',
-        )
-    else:
-        date_index = index.create_in(
-            date_index_path,
-            schema=bydate_schema,
-            indexname='by_date',
+        return index.create_in(
+            index_path,
+            schema=schema,
+            indexname=index_name,
         )
 
-    if index.exists_in(history_index_path, 'page_history'):
-        history_index = index.open_dir(
-            history_index_path,
-            indexname='page_history',
-        )
-    else:
-        history_index = index.create_in(
-            history_index_path,
-            schema=pagehistory_schema,
-            indexname='page_history',
-        )
+    date_index = get_index(
+        config['GITPAGES_DATE_INDEX_PATH'],
+        'date_index',
+        ByDate(),
+    )
+    history_index = get_index(
+        config['GITPAGES_HISTORY_INDEX_PATH'],
+        'history_index',
+        PageHistory(),
+    )
 
     date_index.delete_by_query(Every())
     build_date_index(date_index, repo, 'refs/heads/realposts')
