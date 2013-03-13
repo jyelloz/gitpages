@@ -15,9 +15,9 @@ def build_date_index(index, repo, ref='HEAD'):
 
     def visitor(pages):
 
-        for page, page_rst_entry in pages:
-            _log.debug('visiting blob %r', page_rst_entry.sha)
-            yield page, page_rst_entry
+        for path, page, page_rst_entry in pages:
+            _log.debug('visiting blob %r @ %r', page_rst_entry.sha, path)
+            yield path, page, page_rst_entry
 
     pages_tree = git_storage.get_pages_tree(repo, ref)
 
@@ -30,7 +30,7 @@ def build_date_index(index, repo, ref='HEAD'):
 
     try:
 
-        for page, attachments in pages_data:
+        for path, page, attachments in pages_data:
 
             doctree = read_page_rst(page.data)
             title = get_title(doctree)
@@ -49,6 +49,7 @@ def build_date_index(index, repo, ref='HEAD'):
                 status=unicode(status),
                 blob_id=blob_id,
                 blob_id__ref_id=(blob_id, ref),
+                path=unicode(path),
             )
 
         w.commit(optimize=True)
