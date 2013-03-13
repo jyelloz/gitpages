@@ -4,7 +4,6 @@ from datetime import datetime
 
 from flask import Blueprint, g, render_template
 from werkzeug.exceptions import NotFound
-from pytz import timezone
 
 from .exceptions import PageNotFound
 from .schema import ByDate, PageHistory
@@ -101,11 +100,11 @@ def create_blueprint(config):
     date_index.delete_by_query(Every())
     build_date_index(date_index, repo, 'refs/heads/realposts')
 
-    los_angeles_tz = timezone('America/Los_Angeles')
+    timezone = config['TIMEZONE']
 
     @gitpages_web_ui.before_request
     def setup_gitpages():
-        g.timezone = los_angeles_tz
+        g.timezone = timezone
         g.utcnow = datetime.utcnow()
         g.date_searcher = date_index.searcher()
         g.history_searcher = history_index.searcher()

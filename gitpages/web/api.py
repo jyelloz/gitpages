@@ -17,7 +17,7 @@ _log = logging.getLogger(__name__)
 
 PageInfo = namedtuple(
     'PageInfo',
-    'date slug ref title status blob_id',
+    'date slug ref title status blob_id path',
 )
 
 PageInfo.to_url = lambda self: url_for(
@@ -57,6 +57,7 @@ class GitPages(object):
             date=result['date'],
             title=result['title'],
             status=result['status'],
+            path=result['path'],
         )
 
     @staticmethod

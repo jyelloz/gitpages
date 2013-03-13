@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from whoosh.fields import SchemaClass, ID, DATETIME, TEXT
+from whoosh.fields import SchemaClass, ID, IDLIST, DATETIME, TEXT
 
 
 class ByDate(SchemaClass):
@@ -22,3 +22,18 @@ class PageHistory(SchemaClass):
     date = DATETIME(stored=True)
     ref = ID(stored=True)
     path = ID(stored=True)
+
+
+class RevisionHistory(SchemaClass):
+
+    ref = ID(stored=True)
+    commit_id = ID(stored=True)
+    tree_id = ID(stored=True)
+
+    author = ID(stored=True)
+    committer = ID(stored=True)
+
+    author_time = DATETIME(stored=True)
+    commit_time = DATETIME(stored=True)
+
+    paths = IDLIST(stored=True, expression=':')
