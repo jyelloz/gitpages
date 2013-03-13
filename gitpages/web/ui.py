@@ -6,9 +6,9 @@ from flask import Blueprint, g, render_template
 from werkzeug.exceptions import NotFound
 
 from .exceptions import PageNotFound
-from .schema import ByDate, PageHistory
+from .schema import ByDate, RevisionHistory
 from .api import GitPages
-from ..indexer import build_date_index
+from ..indexer import build_date_index, build_page_history_index
 
 
 def create_blueprint(config):
@@ -94,11 +94,15 @@ def create_blueprint(config):
     history_index = get_index(
         config['GITPAGES_HISTORY_INDEX_PATH'],
         'history_index',
-        PageHistory(),
+        RevisionHistory(),
     )
 
+    ref = config['GITPAGES_DEFAULT_REF']
+
     date_index.delete_by_query(Every())
-    build_date_index(date_index, repo, 'refs/heads/realposts')
+    history_index.delete_by_query(Every())
+    build_date_index(date_index, repo, ref)
+    build_page_history_index(history_index, repo, ref)
 
     timezone = config['TIMEZONE']
 

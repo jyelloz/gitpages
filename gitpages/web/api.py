@@ -100,8 +100,23 @@ class GitPages(object):
 
         return GitPages._load_page(page_result, parts)
 
-    def history(self, page):
-        return page_history(page.slug)
+    def history(self, page, page_number, ref, page_length=10):
+
+        path = page.info.path
+
+        query = (
+            Term('paths', [path]),
+        )
+
+        results = self._history_searcher.search_page(
+            query,
+            pagenum=page_number,
+            pagelen=page_length,
+            sortedby='commit_time',
+            reverse=True,
+        )
+
+        return results
 
     def older_pages(self, page, page_number, ref, page_length=10):
 
@@ -204,15 +219,4 @@ def render_page_content(blob):
             'syntax_highlight': 'short',
             'smart_quotes': True,
         },
-    )
-
-
-def page_history(page_pk):
-    import random
-
-    length = random.randint(1, 20)
-
-    return (
-        'revision %d of page#%s' % (i, page_pk)
-        for i in xrange(1, length + 1)
     )
