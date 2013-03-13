@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from flask import Blueprint, g
+from flask import Blueprint, g, render_template
 from werkzeug.exceptions import NotFound
 from pytz import timezone
 
@@ -132,8 +132,6 @@ def create_blueprint(config):
 
 def index_view(page_number, ref):
 
-    from flask import render_template
-
     results = g.gitpages.index(page_number, ref)
 
     html = render_template(
@@ -167,8 +165,6 @@ def page_to_key(page):
 
 
 def page_view(page):
-
-    from flask import render_template
 
     doc = page.doc()
     older = g.gitpages.older_pages(
