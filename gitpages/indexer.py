@@ -28,28 +28,35 @@ def build_date_index(index, repo, ref='HEAD'):
 
     w = index.writer()
 
-    for page, attachments in pages_data:
+    try:
 
-        doctree = read_page_rst(page.data)
-        title = get_title(doctree)
-        docinfo = get_docinfo_as_dict(doctree)
+        for page, attachments in pages_data:
 
-        slug = slugify(title)
-        date = parse_date(docinfo['date'])
-        status = docinfo['status']
-        blob_id = unicode(page.id)
+            doctree = read_page_rst(page.data)
+            title = get_title(doctree)
+            docinfo = get_docinfo_as_dict(doctree)
 
-        w.add_document(
-            date=date,
-            slug=slug,
-            title=unicode(title),
-            ref_id=unicode(ref),
-            status=unicode(status),
-            blob_id=blob_id,
-            blob_id__ref_id=(blob_id, ref),
-        )
+            slug = slugify(title)
+            date = parse_date(docinfo['date'])
+            status = docinfo['status']
+            blob_id = unicode(page.id)
 
-    w.commit(optimize=True)
+            w.add_document(
+                date=date,
+                slug=slug,
+                title=unicode(title),
+                ref_id=unicode(ref),
+                status=unicode(status),
+                blob_id=blob_id,
+                blob_id__ref_id=(blob_id, ref),
+            )
+
+        w.commit(optimize=True)
+
+    except:
+
+        w.cancel()
+        raise
 
 
 def read_page_rst(page_rst):
