@@ -66,12 +66,13 @@ def create_blueprint(config):
 
     def get_index(index_path, index_name, schema):
 
+        from os import makedirs
+        from os.path import isdir
+
         try:
-            from os import makedirs
             makedirs(index_path)
         except:
-            from os.path import isdir
-            if not (isdir(index_path)):
+            if not isdir(index_path):
                 raise
 
         if index.exists_in(index_path, index_name):
