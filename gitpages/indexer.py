@@ -89,25 +89,24 @@ def build_page_history_index(index, repo, ref='HEAD'):
                 tzoffset(None, c.author_timezone),
             )
 
-            paths = [
-                change.new.path
+            paths = (
+                unicode(change.new.path)
                 for change in entry.changes()
                 if change.new.path is not None
-            ]
-
-            if not paths:
-                continue
-
-            w.add_document(
-                ref=unicode(ref),
-                commit_id=unicode(c.id),
-                tree_id=unicode(c.tree),
-                author=unicode(c.author),
-                committer=unicode(c.committer),
-                commit_time=commit_time,
-                author_time=author_time,
-                paths=unicode(':'.join(paths)),
             )
+
+            for path in paths:
+                w.add_document(
+                    ref=unicode(ref),
+                    commit_id=unicode(c.id),
+                    tree_id=unicode(c.tree),
+                    author=unicode(c.author),
+                    committer=unicode(c.committer),
+                    commit_time=commit_time,
+                    author_time=author_time,
+                    message=unicode(c.message),
+                    path=path,
+                )
 
         w.commit(optimize=True)
 

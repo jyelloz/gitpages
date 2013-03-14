@@ -104,9 +104,7 @@ class GitPages(object):
 
         path = page.info.path
 
-        query = (
-            Term('paths', [path]),
-        )
+        query = Term('path', path)
 
         results = self._history_searcher.search_page(
             query,

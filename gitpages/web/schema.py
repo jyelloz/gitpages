@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from whoosh.fields import SchemaClass, ID, IDLIST, DATETIME, TEXT
+from whoosh.fields import SchemaClass, ID, DATETIME, TEXT
 
 
 class ByDate(SchemaClass):
@@ -36,4 +36,5 @@ class RevisionHistory(SchemaClass):
     author_time = DATETIME(stored=True)
     commit_time = DATETIME(stored=True)
 
-    paths = IDLIST(stored=True, expression=':')
+    message = TEXT(stored=True)
+    path = ID(stored=True)
