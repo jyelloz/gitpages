@@ -183,6 +183,12 @@ def page_view(page):
         page_length=1,
     )
 
+    history = g.gitpages.history(
+        page,
+        ref=page.info.ref,
+        page_number=1,
+    )
+
     body = doc['body']
     title = doc['title']
 
@@ -193,6 +199,7 @@ def page_view(page):
         page=page,
         page_prev=next(iter(older), None),
         page_next=next(iter(newer), None),
+        page_history=history,
     )
 
     return (

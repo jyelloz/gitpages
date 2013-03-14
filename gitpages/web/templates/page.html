@@ -33,6 +33,24 @@
     {{ body|safe }}
   </article>
 
+  {% for change in page_history: %}
+
+    {% if loop.first %}
+    <h3>Revisions:</h3>
+    <ul>
+    {% endif %}
+
+    <li>
+      {{ change.author_time }}:
+      <pre>{{ change.message }}</pre>
+    </li>
+
+    {% if loop.last %}
+    </ul>
+    {% endif %}
+
+  {% endfor %}
+
 {%- endblock content %}
 
 {# vim: set ft=jinja ts=2 sts=2 sw=2 et : #}
