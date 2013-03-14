@@ -2,20 +2,24 @@
 
 from datetime import datetime
 
-from flask import Blueprint, g
+from flask import Blueprint, g, render_template
 from werkzeug.exceptions import NotFound
-from pytz import timezone
 
 from .exceptions import PageNotFound
-from .schema import ByDate, PageHistory
+from .schema import ByDate, RevisionHistory
 from .api import GitPages
-from ..indexer import build_date_index
+from ..indexer import build_date_index, build_page_history_index
 
 
 def create_blueprint(config):
 
     from whoosh import index
     from whoosh.query import Every
+
+    repo = config['GITPAGES_REPOSITORY']
+    ref = config['GITPAGES_DEFAULT_REF']
+
+    allowed_statuses = config['GITPAGES_ALLOWED_STATUSES']
 
     gitpages_web_ui = Blueprint(
         'gitpages_web_ui',
@@ -29,7 +33,7 @@ def create_blueprint(config):
         index_view,
         defaults={
             'page_number': 1,
-            'ref': u'refs/heads/realposts',
+            'ref': unicode(ref),
         },
     )
 
@@ -59,63 +63,59 @@ def create_blueprint(config):
         'page_archive_view',
         page_archive_view,
         defaults={
-            'ref': u'refs/heads/realposts',
+            'ref': unicode(ref),
         },
     )
 
-    repo = config['GITPAGES_REPOSITORY']
+    def get_index(index_path, index_name, schema):
 
-    date_index_path = config['GITPAGES_DATE_INDEX_PATH']
-    history_index_path = config['GITPAGES_HISTORY_INDEX_PATH']
-    try:
         from os import makedirs
-        makedirs(date_index_path)
-        makedirs(history_index_path)
-    except:
         from os.path import isdir
 
-        if not (isdir(date_index_path) and isdir(history_index_path)):
-            raise
+        try:
+            makedirs(index_path)
+        except:
+            if not isdir(index_path):
+                raise
 
-    bydate_schema = ByDate()
-    pagehistory_schema = PageHistory()
+        if index.exists_in(index_path, index_name):
+            return index.open_dir(
+                index_path,
+                indexname=index_name,
+            )
 
-    if index.exists_in(date_index_path, 'by_date'):
-        date_index = index.open_dir(
-            date_index_path,
-            indexname='by_date',
-        )
-    else:
-        date_index = index.create_in(
-            date_index_path,
-            schema=bydate_schema,
-            indexname='by_date',
+        return index.create_in(
+            index_path,
+            schema=schema,
+            indexname=index_name,
         )
 
-    if index.exists_in(history_index_path, 'page_history'):
-        history_index = index.open_dir(
-            history_index_path,
-            indexname='page_history',
-        )
-    else:
-        history_index = index.create_in(
-            history_index_path,
-            schema=pagehistory_schema,
-            indexname='page_history',
-        )
+    date_index = get_index(
+        config['GITPAGES_DATE_INDEX_PATH'],
+        'date_index',
+        ByDate(),
+    )
+    history_index = get_index(
+        config['GITPAGES_HISTORY_INDEX_PATH'],
+        'history_index',
+        RevisionHistory(),
+    )
 
     date_index.delete_by_query(Every())
-    build_date_index(date_index, repo, 'refs/heads/realposts')
+    history_index.delete_by_query(Every())
+    build_date_index(date_index, repo, ref)
+    build_page_history_index(history_index, repo, ref)
 
-    los_angeles_tz = timezone('America/Los_Angeles')
+    timezone = config['TIMEZONE']
 
     @gitpages_web_ui.before_request
     def setup_gitpages():
-        g.timezone = los_angeles_tz
+        g.timezone = timezone
         g.utcnow = datetime.utcnow()
         g.date_searcher = date_index.searcher()
         g.history_searcher = history_index.searcher()
         g.gitpages = GitPages(repo, g.date_searcher, g.history_searcher)
+        g.allowed_statuses = allowed_statuses
 
     @gitpages_web_ui.teardown_request
     def teardown_gitpages(exception=None):
@@ -138,9 +138,7 @@ def create_blueprint(config):
 
 def index_view(page_number, ref):
 
-    from flask import render_template
-
-    results = g.gitpages.index(page_number, ref)
+    results = g.gitpages.index(page_number, ref, statuses=g.allowed_statuses)
 
     html = render_template(
         'index.html',
@@ -161,7 +159,7 @@ def page_archive_view(year, month, day, slug, ref):
     try:
 
         date = g.timezone.localize(datetime(year, month, day))
-        page = g.gitpages.page(date, slug, ref)
+        page = g.gitpages.page(date, slug, ref, statuses=g.allowed_statuses)
         return page_view(page)
 
     except PageNotFound:
@@ -174,20 +172,26 @@ def page_to_key(page):
 
 def page_view(page):
 
-    from flask import render_template
-
     doc = page.doc()
     older = g.gitpages.older_pages(
         page,
         ref=page.info.ref,
         page_number=1,
         page_length=1,
+        statuses=g.allowed_statuses,
     )
     newer = g.gitpages.newer_pages(
         page,
         ref=page.info.ref,
         page_number=1,
         page_length=1,
+        statuses=g.allowed_statuses,
+    )
+
+    history = g.gitpages.history(
+        page,
+        ref=page.info.ref,
+        page_number=1,
     )
 
     body = doc['body']
@@ -200,6 +204,7 @@ def page_view(page):
         page=page,
         page_prev=next(iter(older), None),
         page_next=next(iter(newer), None),
+        page_history=history,
     )
 
     return (

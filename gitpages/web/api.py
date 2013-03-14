@@ -17,7 +17,7 @@ _log = logging.getLogger(__name__)
 
 PageInfo = namedtuple(
     'PageInfo',
-    'date slug ref title status blob_id',
+    'date slug ref title status blob_id path',
 )
 
 PageInfo.to_url = lambda self: url_for(
@@ -57,6 +57,7 @@ class GitPages(object):
             date=result['date'],
             title=result['title'],
             status=result['status'],
+            path=result['path'],
         )
 
     @staticmethod
@@ -99,15 +100,35 @@ class GitPages(object):
 
         return GitPages._load_page(page_result, parts)
 
-    def history(self, page):
-        return page_history(page.slug)
+    def history(self, page, page_number, ref, page_length=10):
 
-    def older_pages(self, page, page_number, ref, page_length=10):
+        path = page.info.path
+
+        query = Term('path', path)
+
+        results = self._history_searcher.search_page(
+            query,
+            pagenum=page_number,
+            pagelen=page_length,
+            sortedby='commit_time',
+            reverse=True,
+        )
+
+        return results
+
+    def older_pages(
+        self,
+        page,
+        page_number,
+        ref,
+        page_length=10,
+        statuses=_default_statuses,
+    ):
 
         latest = page.info.date
 
         query = (
-            Or(Term('status', s) for s in GitPages._default_statuses) &
+            Or(Term('status', s) for s in statuses) &
             DateRange(
                 'date',
                 start=None,
@@ -130,12 +151,19 @@ class GitPages(object):
             for r in results
         )
 
-    def newer_pages(self, page, page_number, ref, page_length=10):
+    def newer_pages(
+        self,
+        page,
+        page_number,
+        ref,
+        page_length=10,
+        statuses=_default_statuses,
+    ):
 
         earliest = page.info.date
 
         query = (
-            Or(Term('status', s) for s in GitPages._default_statuses) &
+            Or(Term('status', s) for s in statuses) &
             DateRange(
                 'date',
                 start=earliest,
@@ -158,9 +186,15 @@ class GitPages(object):
             for r in results
         )
 
-    def index(self, page_number, ref, page_length=10):
+    def index(
+        self,
+        page_number,
+        ref,
+        page_length=10,
+        statuses=_default_statuses,
+    ):
 
-        query = Or(Term('status', s) for s in GitPages._default_statuses)
+        query = Or(Term('status', s) for s in statuses)
 
         results = self._date_searcher.search_page(
             query,
@@ -203,15 +237,4 @@ def render_page_content(blob):
             'syntax_highlight': 'short',
             'smart_quotes': True,
         },
-    )
-
-
-def page_history(page_pk):
-    import random
-
-    length = random.randint(1, 20)
-
-    return (
-        'revision %d of page#%s' % (i, page_pk)
-        for i in xrange(1, length + 1)
     )

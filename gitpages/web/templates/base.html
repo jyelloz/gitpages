@@ -3,6 +3,7 @@
 <html>
 
   <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>
       {%- block page_title -%}
         {{ site_title }}
@@ -27,6 +28,8 @@
     {% block content -%}
       {{ body }}
     {%- endblock content %}
+
+    {% include "footer.html" ignore missing %}
 
   </body>
 

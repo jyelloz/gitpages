@@ -15,9 +15,9 @@ def build_date_index(index, repo, ref='HEAD'):
 
     def visitor(pages):
 
-        for page, page_rst_entry in pages:
-            _log.debug('visiting blob %r', page_rst_entry.sha)
-            yield page, page_rst_entry
+        for path, page, page_rst_entry in pages:
+            _log.debug('visiting blob %r @ %r', page_rst_entry.sha, path)
+            yield path, page, page_rst_entry
 
     pages_tree = git_storage.get_pages_tree(repo, ref)
 
@@ -30,7 +30,7 @@ def build_date_index(index, repo, ref='HEAD'):
 
     try:
 
-        for page, attachments in pages_data:
+        for path, page, attachments in pages_data:
 
             doctree = read_page_rst(page.data)
             title = get_title(doctree)
@@ -49,6 +49,7 @@ def build_date_index(index, repo, ref='HEAD'):
                 status=unicode(status),
                 blob_id=blob_id,
                 blob_id__ref_id=(blob_id, ref),
+                path=unicode(path),
             )
 
         w.commit(optimize=True)
@@ -59,7 +60,63 @@ def build_date_index(index, repo, ref='HEAD'):
         raise
 
 
+def build_page_history_index(index, repo, ref='HEAD'):
+
+    from datetime import datetime
+    from dateutil.tz import tzoffset
+
+    from dulwich.walk import Walker
+
+    head = repo.ref(ref)
+
+    walker = Walker(repo.object_store, [head])
+
+    w = index.writer()
+
+    try:
+
+        for entry in walker:
+
+            c = entry.commit
+
+            commit_time = datetime.fromtimestamp(
+                c.commit_time,
+                tzoffset(None, c.commit_timezone),
+            )
+
+            author_time = datetime.fromtimestamp(
+                c.author_time,
+                tzoffset(None, c.author_timezone),
+            )
+
+            paths = (
+                unicode(change.new.path)
+                for change in entry.changes()
+                if change.new.path is not None
+            )
+
+            for path in paths:
+                w.add_document(
+                    ref=unicode(ref),
+                    commit_id=unicode(c.id),
+                    tree_id=unicode(c.tree),
+                    author=unicode(c.author),
+                    committer=unicode(c.committer),
+                    commit_time=commit_time,
+                    author_time=author_time,
+                    message=unicode(c.message),
+                    path=path,
+                )
+
+        w.commit(optimize=True)
+
+    except:
+        w.cancel()
+        raise
+
+
 def read_page_rst(page_rst):
+
     from docutils.core import publish_doctree
 
     return publish_doctree(page_rst)

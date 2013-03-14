@@ -2,6 +2,9 @@
 
 import itertools
 import functools
+import posixpath
+
+PAGES_TREE, = 'page',
 
 
 def iterable_nth(iterable, n, default=None):
@@ -17,26 +20,31 @@ def get_pages_tree(repository, ref='HEAD'):
     return repository.tree(root['page'][1])
 
 
-def find_pages(repository, pages_tree):
+def find_pages(repository, pages_tree, prefix=PAGES_TREE):
 
-    page_items = pages_tree.iteritems()
+    page_entries = pages_tree.iteritems()
 
-    page_tree_shas = (entry.sha for entry in page_items)
-    page_trees = (repository.tree(sha) for sha in page_tree_shas)
+    page_trees = ((e.path, repository.tree(e.sha)) for e in page_entries)
+
+    page_trees_with_rst_entries = (
+        (p, t, find_page_rst_entry(t))
+        for (p, t) in page_trees
+    )
 
     return (
-        (t, find_page_rst_entry(t))
-        for t in page_trees
+        (posixpath.join(prefix, p, rst.path), t, rst)
+        for (p, t, rst) in page_trees_with_rst_entries
     )
 
 
 def load_pages_with_attachments(repository, page_trees_with_rst):
     return (
         (
+            path,
             load_page_data(repository, page_rst_entry),
             load_page_attachments(repository, page_tree),
         )
-        for (page_tree, page_rst_entry) in page_trees_with_rst
+        for (path, page_tree, page_rst_entry) in page_trees_with_rst
     )
 
 

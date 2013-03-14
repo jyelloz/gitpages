@@ -30,8 +30,34 @@
   </div>
 
   <article>
+
     {{ body|safe }}
+
+    <footer>
+      <p class="info">
+        Posted on {{ page.info.date.strftime('%a %d %b %Y') }}
+      </p>
+    </footer>
+
   </article>
+
+  {% for change in page_history: %}
+
+    {% if loop.first %}
+    <h3>Revisions:</h3>
+    <ul>
+    {% endif %}
+
+    <li>
+      {{ change.author_time }}:
+      <pre>{{ change.message }}</pre>
+    </li>
+
+    {% if loop.last %}
+    </ul>
+    {% endif %}
+
+  {% endfor %}
 
 {%- endblock content %}
 
