@@ -19,6 +19,8 @@ def create_blueprint(config):
     repo = config['GITPAGES_REPOSITORY']
     ref = config['GITPAGES_DEFAULT_REF']
 
+    allowed_statuses = config['GITPAGES_ALLOWED_STATUSES']
+
     gitpages_web_ui = Blueprint(
         'gitpages_web_ui',
         __name__,
@@ -113,6 +115,7 @@ def create_blueprint(config):
         g.date_searcher = date_index.searcher()
         g.history_searcher = history_index.searcher()
         g.gitpages = GitPages(repo, g.date_searcher, g.history_searcher)
+        g.allowed_statuses = allowed_statuses
 
     @gitpages_web_ui.teardown_request
     def teardown_gitpages(exception=None):
@@ -135,7 +138,7 @@ def create_blueprint(config):
 
 def index_view(page_number, ref):
 
-    results = g.gitpages.index(page_number, ref)
+    results = g.gitpages.index(page_number, ref, statuses=g.allowed_statuses)
 
     html = render_template(
         'index.html',
@@ -156,7 +159,7 @@ def page_archive_view(year, month, day, slug, ref):
     try:
 
         date = g.timezone.localize(datetime(year, month, day))
-        page = g.gitpages.page(date, slug, ref)
+        page = g.gitpages.page(date, slug, ref, statuses=g.allowed_statuses)
         return page_view(page)
 
     except PageNotFound:
@@ -175,12 +178,14 @@ def page_view(page):
         ref=page.info.ref,
         page_number=1,
         page_length=1,
+        statuses=g.allowed_statuses,
     )
     newer = g.gitpages.newer_pages(
         page,
         ref=page.info.ref,
         page_number=1,
         page_length=1,
+        statuses=g.allowed_statuses,
     )
 
     history = g.gitpages.history(
