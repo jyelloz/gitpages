@@ -116,12 +116,19 @@ class GitPages(object):
 
         return results
 
-    def older_pages(self, page, page_number, ref, page_length=10):
+    def older_pages(
+        self,
+        page,
+        page_number,
+        ref,
+        page_length=10,
+        statuses=_default_statuses,
+    ):
 
         latest = page.info.date
 
         query = (
-            Or(Term('status', s) for s in GitPages._default_statuses) &
+            Or(Term('status', s) for s in statuses) &
             DateRange(
                 'date',
                 start=None,
@@ -144,12 +151,19 @@ class GitPages(object):
             for r in results
         )
 
-    def newer_pages(self, page, page_number, ref, page_length=10):
+    def newer_pages(
+        self,
+        page,
+        page_number,
+        ref,
+        page_length=10,
+        statuses=_default_statuses,
+    ):
 
         earliest = page.info.date
 
         query = (
-            Or(Term('status', s) for s in GitPages._default_statuses) &
+            Or(Term('status', s) for s in statuses) &
             DateRange(
                 'date',
                 start=earliest,
@@ -172,9 +186,15 @@ class GitPages(object):
             for r in results
         )
 
-    def index(self, page_number, ref, page_length=10):
+    def index(
+        self,
+        page_number,
+        ref,
+        page_length=10,
+        statuses=_default_statuses,
+    ):
 
-        query = Or(Term('status', s) for s in GitPages._default_statuses)
+        query = Or(Term('status', s) for s in statuses)
 
         results = self._date_searcher.search_page(
             query,
