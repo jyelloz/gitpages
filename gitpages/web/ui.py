@@ -16,6 +16,9 @@ def create_blueprint(config):
     from whoosh import index
     from whoosh.query import Every
 
+    repo = config['GITPAGES_REPOSITORY']
+    ref = config['GITPAGES_DEFAULT_REF']
+
     gitpages_web_ui = Blueprint(
         'gitpages_web_ui',
         __name__,
@@ -28,7 +31,7 @@ def create_blueprint(config):
         index_view,
         defaults={
             'page_number': 1,
-            'ref': u'refs/heads/realposts',
+            'ref': unicode(ref),
         },
     )
 
@@ -58,11 +61,9 @@ def create_blueprint(config):
         'page_archive_view',
         page_archive_view,
         defaults={
-            'ref': u'refs/heads/realposts',
+            'ref': unicode(ref),
         },
     )
-
-    repo = config['GITPAGES_REPOSITORY']
 
     def get_index(index_path, index_name, schema):
 
@@ -97,8 +98,6 @@ def create_blueprint(config):
         'history_index',
         RevisionHistory(),
     )
-
-    ref = config['GITPAGES_DEFAULT_REF']
 
     date_index.delete_by_query(Every())
     history_index.delete_by_query(Every())
