@@ -30,7 +30,15 @@
   </div>
 
   <article>
+
     {{ body|safe }}
+
+    <footer>
+      <p class="info">
+        Posted on {{ page.info.date.strftime('%a %d %b %Y') }}
+      </p>
+    </footer>
+
   </article>
 
   {% for change in page_history: %}
