@@ -1,4 +1,11 @@
 {% extends "base.html" %}
+{% block head_extra %}
+  {{ super() }}
+  <script type="text/javascript" src="{{ url_for('static', filename='js/lastfm.api.md5.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/lastfm.api.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/lastfmstats.js') }}"></script>
+{% endblock head_extra %}
+
 
 {% block content %}
 
@@ -18,5 +25,9 @@
 {% endfor %}
 
 {% endblock content %}
+
+{% block sidebar %}
+{% include "sidebar.html" ignore missing %}
+{% endblock sidebar %}
 
 {# vim: set ft=jinja ts=2 sts=2 sw=2 et : #}

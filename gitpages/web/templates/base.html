@@ -14,7 +14,6 @@
           rel="alternate"
           title="{{ site_title }}"
           type="application/atom+xml" />
-
     {%- block head_extra %}{% endblock head_extra %}
   </head>
 
@@ -30,9 +29,27 @@
     {%- endblock heading %}
     </header>
 
-    {% block content -%}
-      {{ body }}
-    {%- endblock content %}
+    <div class="main clearfix">
+
+      {% block content_wrapper %}
+      <div class="content-wrapper">
+        <div class="content">
+          {% block content -%}
+            {{ body }}
+          {%- endblock content %}
+        </div>
+      </div>
+      {% endblock content_wrapper %}
+
+      {% block sidebar_wrapper %}
+      <div class="sidebar-wrapper">
+        <div class="sidebar">
+          {% block sidebar %}{% endblock sidebar %}
+        </div>
+      </div>
+      {% endblock sidebar_wrapper%}
+
+    </div>
 
     {% include "footer.html" ignore missing %}
 

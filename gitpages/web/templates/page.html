@@ -4,12 +4,12 @@
   {{ title|typogrify }} &mdash; {{ super() }}
 {%- endblock page_title %}
 
-{% block heading %}
-  {{ super() }}
-  <h2><a href="{{ page.to_url() }}">{{ title|typogrify }}</a></h2>
-{% endblock heading %}
 
 {% block content -%}
+
+  <header>
+    <h2><a href="{{ page.to_url() }}">{{ title|typogrify }}</a></h2>
+  </header>
 
   <div class="navigation">
 
@@ -35,7 +35,7 @@
 
     <footer>
       <p class="info">
-        Posted on {{ page.info.date.strftime('%a %d %b %Y') }}
+        Posted on <b>{{ page.info.date.strftime('%a %d %b %Y') }}</b>
       </p>
     </footer>
 
