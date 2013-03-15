@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
+from urlparse import urljoin
 
-from flask import Blueprint, g, render_template
+from flask import (
+    Blueprint, current_app, g, render_template, request, redirect, url_for
+)
 from werkzeug.exceptions import NotFound
+from werkzeug.contrib.atom import AtomFeed
 
 from .exceptions import PageNotFound
 from .schema import ByDate, RevisionHistory
@@ -35,6 +39,17 @@ def create_blueprint(config):
             'page_number': 1,
             'ref': unicode(ref),
         },
+    )
+
+    gitpages_web_ui.add_url_rule(
+        '/feed/atom',
+        'atom_feed',
+        atom_feed,
+    )
+    gitpages_web_ui.add_url_rule(
+        '/feed/rss',
+        'rss_feed_redirect',
+        rss_feed_redirect,
     )
 
     gitpages_web_ui.add_url_rule(
@@ -164,6 +179,42 @@ def page_archive_view(year, month, day, slug, ref):
 
     except PageNotFound:
         raise NotFound()
+
+
+def atom_feed():
+
+    config = current_app.config
+
+    feed = AtomFeed(
+        config['SITE_TITLE'],
+        feed_url=request.url,
+        url=request.url_root,
+    )
+
+    results = g.gitpages.index(
+        1,
+        ref=config['GITPAGES_DEFAULT_REF'],
+        statuses=g.allowed_statuses,
+    )
+
+    for page in results:
+
+        doc = page.doc()
+
+        feed.add(
+            doc['title'],
+            doc['body'],
+            content_type='html',
+            url=urljoin(request.url_root, page.to_url()),
+            updated=page.info.date,
+            published=page.info.date,
+        )
+
+    return feed.get_response()
+
+
+def rss_feed_redirect():
+    return redirect(url_for('.atom_feed'), code=301)
 
 
 def page_to_key(page):
