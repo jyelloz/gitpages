@@ -3,7 +3,9 @@
 from datetime import datetime
 from urlparse import urljoin
 
-from flask import Blueprint, current_app, g, render_template, request
+from flask import (
+    Blueprint, current_app, g, render_template, request, redirect, url_for
+)
 from werkzeug.exceptions import NotFound
 from werkzeug.contrib.atom import AtomFeed
 
@@ -43,6 +45,11 @@ def create_blueprint(config):
         '/feed/atom',
         'atom_feed',
         atom_feed,
+    )
+    gitpages_web_ui.add_url_rule(
+        '/feed/rss',
+        'rss_feed_redirect',
+        rss_feed_redirect,
     )
 
     gitpages_web_ui.add_url_rule(
@@ -204,6 +211,10 @@ def atom_feed():
         )
 
     return feed.get_response()
+
+
+def rss_feed_redirect():
+    return redirect(url_for('.atom_feed'), code=301)
 
 
 def page_to_key(page):
