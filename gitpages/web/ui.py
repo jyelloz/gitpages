@@ -220,21 +220,13 @@ def index_view_default_ref(page_number):
 
 def index_view(page_number, ref):
 
-    results, whoosh_results = g.gitpages.index(
+    results, results_page = g.gitpages.index(
         page_number, ref, statuses=g.allowed_statuses
     )
 
-    html = render_template(
+    return render_template(
         'index.html',
         index=results,
-    )
-
-    return (
-        html,
-        200,
-        {
-            'Content-Type': 'text/html; charset=utf-8',
-        },
     )
 
 
@@ -298,7 +290,7 @@ def yearly_archive(year, ref, page_number):
 
 def date_range_index(earliest, latest, ref, page_number):
 
-    results, whoosh_results = g.gitpages.index(
+    results, results_page = g.gitpages.index(
         page_number,
         ref=ref,
         start_date=earliest,
@@ -308,17 +300,9 @@ def date_range_index(earliest, latest, ref, page_number):
         statuses=g.allowed_statuses,
     )
 
-    html = render_template(
+    return render_template(
         'index.html',
         index=results,
-    )
-
-    return (
-        html,
-        200,
-        {
-            'Content-Type': 'text/html; charset=utf-8',
-        },
     )
 
 
@@ -332,7 +316,7 @@ def atom_feed():
         url=request.url_root,
     )
 
-    results, whoosh_results = g.gitpages.index(
+    results, results_page = g.gitpages.index(
         1,
         ref=current_app.default_ref,
         statuses=g.allowed_statuses,
@@ -389,7 +373,7 @@ def page_view(page):
     body = doc['body']
     title = doc['title']
 
-    html = render_template(
+    return render_template(
         'page.html',
         title=title,
         body=body,
@@ -397,12 +381,4 @@ def page_view(page):
         page_prev=next(iter(older), None),
         page_next=next(iter(newer), None),
         page_history=history,
-    )
-
-    return (
-        html,
-        200,
-        {
-            'Content-Type': 'text/html; charset=utf-8',
-        },
     )
