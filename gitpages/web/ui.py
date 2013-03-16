@@ -56,13 +56,14 @@ def create_blueprint():
         '/' + '/'.join(
             [
                 'archives',
+                '<git_ref:ref>',
                 '<int(fixed_digits=4):year>',
                 '<int(fixed_digits=2):month>',
                 '<int(fixed_digits=2):day>',
-                '<slug>!<git_ref:ref>',
+                '<slug>',
             ]
         ),
-        'page_archive_view',
+        'page_archive_view_ref',
         page_archive_view,
     )
     gitpages_web_ui.add_url_rule(

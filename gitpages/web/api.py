@@ -28,6 +28,15 @@ PageInfo.to_url = lambda self: url_for(
     slug=self.slug,
 )
 
+PageInfo.to_url_tree = lambda self, ref: url_for(
+    '.page_archive_view_ref',
+    ref=ref,
+    year=self.date.year,
+    month=self.date.month,
+    day=self.date.day,
+    slug=self.slug,
+)
+
 
 Page = namedtuple(
     'Page',
@@ -35,6 +44,7 @@ Page = namedtuple(
 )
 
 Page.to_url = lambda self: self.info.to_url()
+Page.to_url_tree = lambda self, ref: self.info.to_url_tree(ref)
 
 
 class GitPages(object):

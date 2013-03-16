@@ -29,6 +29,7 @@ class RevisionHistory(SchemaClass):
     ref = ID(stored=True)
     commit_id = ID(stored=True)
     tree_id = ID(stored=True)
+    blob_id = ID(stored=True)
 
     author = ID(stored=True)
     committer = ID(stored=True)

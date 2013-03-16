@@ -31,7 +31,9 @@
     {% endif %}
 
     <li>
-      {{ change.author_time }}:
+      <a href="{{ page.to_url_tree(change.tree_id)|safe }}">
+        {{ change.author_time }}: {{ change.tree_id }}
+      </a>
       <pre>{{ change.message }}</pre>
     </li>
 
