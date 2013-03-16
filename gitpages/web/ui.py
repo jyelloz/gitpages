@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from datetime import datetime
 from urlparse import urljoin
 
@@ -15,15 +16,13 @@ from .api import GitPages
 from ..indexer import build_date_index, build_page_history_index
 
 
-def create_blueprint(config):
+_log = logging.getLogger(__name__)
+
+
+def create_blueprint():
 
     from whoosh import index
     from whoosh.query import Every
-
-    repo = config['GITPAGES_REPOSITORY']
-    ref = config['GITPAGES_DEFAULT_REF']
-
-    allowed_statuses = config['GITPAGES_ALLOWED_STATUSES']
 
     gitpages_web_ui = Blueprint(
         'gitpages_web_ui',
@@ -34,10 +33,9 @@ def create_blueprint(config):
     gitpages_web_ui.add_url_rule(
         '/',
         'index_view',
-        index_view,
+        index_view_default_ref,
         defaults={
             'page_number': 1,
-            'ref': unicode(ref),
         },
     )
 
@@ -63,7 +61,7 @@ def create_blueprint(config):
             ]
         ),
         'page_archive_view',
-        page_archive_view
+        page_archive_view,
     )
     gitpages_web_ui.add_url_rule(
         '/' + '/'.join(
@@ -76,10 +74,7 @@ def create_blueprint(config):
             ]
         ) + '/',
         'page_archive_view',
-        page_archive_view,
-        defaults={
-            'ref': unicode(ref),
-        },
+        page_archive_view_default_ref,
     )
 
     def get_index(index_path, index_name, schema):
@@ -105,32 +100,52 @@ def create_blueprint(config):
             indexname=index_name,
         )
 
-    date_index = get_index(
-        config['GITPAGES_DATE_INDEX_PATH'],
-        'date_index',
-        ByDate(),
-    )
-    history_index = get_index(
-        config['GITPAGES_HISTORY_INDEX_PATH'],
-        'history_index',
-        RevisionHistory(),
-    )
+    @gitpages_web_ui.before_app_first_request
+    def setup_gitpages_application():
 
-    date_index.delete_by_query(Every())
-    history_index.delete_by_query(Every())
-    build_date_index(date_index, repo, ref)
-    build_page_history_index(history_index, repo, ref)
+        _log.debug('setting up blueprint')
 
-    timezone = config['TIMEZONE']
+        config = current_app.config
+
+        repo = config['GITPAGES_REPOSITORY']
+        ref = config['GITPAGES_DEFAULT_REF']
+
+        date_index = get_index(
+            config['GITPAGES_DATE_INDEX_PATH'],
+            'date_index',
+            ByDate(),
+        )
+        history_index = get_index(
+            config['GITPAGES_HISTORY_INDEX_PATH'],
+            'history_index',
+            RevisionHistory(),
+        )
+
+        date_index.delete_by_query(Every())
+        history_index.delete_by_query(Every())
+
+        build_date_index(date_index, repo, ref)
+        build_page_history_index(history_index, repo, ref)
+
+        current_app.repo = repo
+        current_app.default_ref = ref
+        current_app.allowed_statuses = config['GITPAGES_ALLOWED_STATUSES']
+        current_app.timezone = config['TIMEZONE']
+        current_app.date_index = date_index
+        current_app.history_index = history_index
 
     @gitpages_web_ui.before_request
     def setup_gitpages():
-        g.timezone = timezone
+        g.timezone = current_app.timezone
         g.utcnow = datetime.utcnow()
-        g.date_searcher = date_index.searcher()
-        g.history_searcher = history_index.searcher()
-        g.gitpages = GitPages(repo, g.date_searcher, g.history_searcher)
-        g.allowed_statuses = allowed_statuses
+        g.date_searcher = current_app.date_index.searcher()
+        g.history_searcher = current_app.history_index.searcher()
+        g.gitpages = GitPages(
+            current_app.repo,
+            g.date_searcher,
+            g.history_searcher
+        )
+        g.allowed_statuses = current_app.allowed_statuses
 
     @gitpages_web_ui.teardown_request
     def teardown_gitpages(exception=None):
@@ -151,6 +166,11 @@ def create_blueprint(config):
     return gitpages_web_ui
 
 
+def index_view_default_ref(page_number):
+
+    return index_view(page_number, current_app.default_ref)
+
+
 def index_view(page_number, ref):
 
     results = g.gitpages.index(page_number, ref, statuses=g.allowed_statuses)
@@ -167,6 +187,11 @@ def index_view(page_number, ref):
             'Content-Type': 'text/html; charset=utf-8',
         },
     )
+
+
+def page_archive_view_default_ref(year, month, day, slug):
+
+    return page_archive_view(year, month, day, current_app.default_ref)
 
 
 def page_archive_view(year, month, day, slug, ref):
