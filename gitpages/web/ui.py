@@ -19,12 +19,10 @@ from ..indexer import build_date_index, build_page_history_index
 _log = logging.getLogger(__name__)
 
 
-def create_blueprint(config):
+def create_blueprint():
 
     from whoosh import index
     from whoosh.query import Every
-
-    ref = config['GITPAGES_DEFAULT_REF']
 
     gitpages_web_ui = Blueprint(
         'gitpages_web_ui',
@@ -35,10 +33,9 @@ def create_blueprint(config):
     gitpages_web_ui.add_url_rule(
         '/',
         'index_view',
-        index_view,
+        index_view_default_ref,
         defaults={
             'page_number': 1,
-            'ref': unicode(ref),
         },
     )
 
@@ -64,7 +61,7 @@ def create_blueprint(config):
             ]
         ),
         'page_archive_view',
-        page_archive_view
+        page_archive_view,
     )
     gitpages_web_ui.add_url_rule(
         '/' + '/'.join(
@@ -77,10 +74,7 @@ def create_blueprint(config):
             ]
         ) + '/',
         'page_archive_view',
-        page_archive_view,
-        defaults={
-            'ref': unicode(ref),
-        },
+        page_archive_view_default_ref,
     )
 
     def get_index(index_path, index_name, schema):
@@ -114,6 +108,7 @@ def create_blueprint(config):
         config = current_app.config
 
         repo = config['GITPAGES_REPOSITORY']
+        ref = config['GITPAGES_DEFAULT_REF']
 
         date_index = get_index(
             config['GITPAGES_DATE_INDEX_PATH'],
@@ -133,6 +128,7 @@ def create_blueprint(config):
         build_page_history_index(history_index, repo, ref)
 
         current_app.repo = repo
+        current_app.default_ref = ref
         current_app.allowed_statuses = config['GITPAGES_ALLOWED_STATUSES']
         current_app.timezone = config['TIMEZONE']
         current_app.date_index = date_index
@@ -170,6 +166,11 @@ def create_blueprint(config):
     return gitpages_web_ui
 
 
+def index_view_default_ref(page_number):
+
+    return index_view(page_number, current_app.default_ref)
+
+
 def index_view(page_number, ref):
 
     results = g.gitpages.index(page_number, ref, statuses=g.allowed_statuses)
@@ -186,6 +187,11 @@ def index_view(page_number, ref):
             'Content-Type': 'text/html; charset=utf-8',
         },
     )
+
+
+def page_archive_view_default_ref(year, month, day, slug):
+
+    return page_archive_view(year, month, day, current_app.default_ref)
 
 
 def page_archive_view(year, month, day, slug, ref):

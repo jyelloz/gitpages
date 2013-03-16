@@ -32,7 +32,7 @@ def create():
 
     register_typogrify(application.jinja_env)
 
-    gitpages_web_ui = ui.create_blueprint(application.config)
+    gitpages_web_ui = ui.create_blueprint()
     application.register_blueprint(gitpages_web_ui)
 
     return application
