@@ -4,6 +4,8 @@ import logging
 from datetime import datetime
 from urlparse import urljoin
 
+from dateutil.relativedelta import relativedelta
+
 from flask import (
     Blueprint, current_app, g, render_template, request, redirect, url_for
 )
@@ -75,6 +77,51 @@ def create_blueprint():
         ) + '/',
         'page_archive_view',
         page_archive_view_default_ref,
+    )
+
+    gitpages_web_ui.add_url_rule(
+        '/' + '/'.join(
+            [
+                'archives',
+                '<int(fixed_digits=4):year>',
+                '<int(fixed_digits=2):month>',
+                '<int(fixed_digits=2):day>',
+            ]
+        ) + '/',
+        'daily_archive',
+        daily_archive_default,
+        defaults={
+            'page_number': 1,
+        },
+    )
+
+    gitpages_web_ui.add_url_rule(
+        '/' + '/'.join(
+            [
+                'archives',
+                '<int(fixed_digits=4):year>',
+                '<int(fixed_digits=2):month>',
+            ]
+        ) + '/',
+        'monthly_archive',
+        monthly_archive_default,
+        defaults={
+            'page_number': 1,
+        },
+    )
+
+    gitpages_web_ui.add_url_rule(
+        '/' + '/'.join(
+            [
+                'archives',
+                '<int(fixed_digits=4):year>',
+            ]
+        ) + '/',
+        'yearly_archive',
+        yearly_archive_default,
+        defaults={
+            'page_number': 1,
+        },
     )
 
     def get_index(index_path, index_name, schema):
@@ -173,19 +220,13 @@ def index_view_default_ref(page_number):
 
 def index_view(page_number, ref):
 
-    results = g.gitpages.index(page_number, ref, statuses=g.allowed_statuses)
-
-    html = render_template(
-        'index.html',
-        index=results,
+    results, results_page = g.gitpages.index(
+        page_number, ref, statuses=g.allowed_statuses
     )
 
-    return (
-        html,
-        200,
-        {
-            'Content-Type': 'text/html; charset=utf-8',
-        },
+    return render_template(
+        'index.html',
+        index=results,
     )
 
 
@@ -206,6 +247,65 @@ def page_archive_view(year, month, day, slug, ref):
         raise NotFound()
 
 
+def daily_archive_default(year, month, day, page_number):
+
+    return daily_archive(
+        year, month, day, current_app.default_ref, page_number
+    )
+
+
+def daily_archive(year, month, day, ref, page_number):
+
+    earliest = g.timezone.localize(datetime(year, month, day))
+    latest = earliest + relativedelta(days=1)
+
+    return date_range_index(earliest, latest, ref, page_number)
+
+
+def monthly_archive_default(year, month, page_number):
+
+    return monthly_archive(year, month, current_app.default_ref, page_number)
+
+
+def monthly_archive(year, month, ref, page_number):
+
+    earliest = g.timezone.localize(datetime(year, month, 1))
+    latest = earliest + relativedelta(months=1)
+
+    return date_range_index(earliest, latest, ref, page_number)
+
+
+def yearly_archive_default(year, page_number):
+
+    return yearly_archive(year, current_app.default_ref, page_number)
+
+
+def yearly_archive(year, ref, page_number):
+
+    earliest = g.timezone.localize(datetime(year, 1, 1))
+    latest = earliest + relativedelta(years=1)
+
+    return date_range_index(earliest, latest, ref, page_number)
+
+
+def date_range_index(earliest, latest, ref, page_number):
+
+    results, results_page = g.gitpages.index(
+        page_number,
+        ref=ref,
+        start_date=earliest,
+        end_date=latest,
+        start_date_excl=False,
+        end_date_excl=True,
+        statuses=g.allowed_statuses,
+    )
+
+    return render_template(
+        'index.html',
+        index=results,
+    )
+
+
 def atom_feed():
 
     config = current_app.config
@@ -216,9 +316,9 @@ def atom_feed():
         url=request.url_root,
     )
 
-    results = g.gitpages.index(
+    results, results_page = g.gitpages.index(
         1,
-        ref=config['GITPAGES_DEFAULT_REF'],
+        ref=current_app.default_ref,
         statuses=g.allowed_statuses,
     )
 
@@ -273,7 +373,7 @@ def page_view(page):
     body = doc['body']
     title = doc['title']
 
-    html = render_template(
+    return render_template(
         'page.html',
         title=title,
         body=body,
@@ -281,12 +381,4 @@ def page_view(page):
         page_prev=next(iter(older), None),
         page_next=next(iter(newer), None),
         page_history=history,
-    )
-
-    return (
-        html,
-        200,
-        {
-            'Content-Type': 'text/html; charset=utf-8',
-        },
     )

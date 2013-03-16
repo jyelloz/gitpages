@@ -190,11 +190,29 @@ class GitPages(object):
         self,
         page_number,
         ref,
+        start_date=None,
+        end_date=None,
+        start_date_excl=False,
+        end_date_excl=False,
         page_length=10,
         statuses=_default_statuses,
     ):
 
-        query = Or(Term('status', s) for s in statuses)
+        status_clause = Or(Term('status', s) for s in statuses)
+
+        if start_date is None or end_date is None:
+
+            query = status_clause
+
+        else:
+
+            query = status_clause & DateRange(
+                'date',
+                start=start_date,
+                end=end_date,
+                startexcl=bool(start_date_excl),
+                endexcl=bool(end_date_excl),
+            )
 
         results = self._date_searcher.search_page(
             query,
@@ -217,7 +235,7 @@ class GitPages(object):
         return (
             GitPages._load_page(r, parts)
             for r, parts in results_parts
-        )
+        ), results
 
     def teardown(self):
         pass
