@@ -16,7 +16,7 @@ def build_date_index(index, repo, ref='HEAD'):
     def visitor(pages):
 
         for path, page, page_rst_entry in pages:
-            _log.debug('visiting blob %r @ %r', page_rst_entry.sha, path)
+            _log.debug('visiting blob %r@%r', page_rst_entry.sha, path)
             yield path, page, page_rst_entry
 
     pages_tree = git_storage.get_pages_tree(repo, ref)
