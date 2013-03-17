@@ -78,7 +78,7 @@ class GitPages(object):
             doc=parts,
         )
 
-    def page(self, date, slug, ref, statuses=_default_statuses):
+    def page(self, date, slug, ref=None, statuses=_default_statuses):
 
         earliest = datetime(date.year, date.month, date.day)
         latest = earliest + GitPages._max_timedelta
@@ -101,9 +101,20 @@ class GitPages(object):
             _log.debug('results is empty')
             raise PageNotFound(date, slug, ref)
 
-        page_result = results[0]
+        page_result = next(iter(results))
 
-        blob_id = page_result['blob_id']
+        if ref is None:
+            blob_id = page_result['blob_id']
+        else:
+            historic_results = self._history_searcher.search_page(
+                Term('path', page_result['path']) &
+                Term('tree_id', ref),
+                pagenum=1,
+                pagelen=1,
+            )
+
+            blob_id = next(iter(historic_results))['blob_id']
+
         blob = self._repo.get_blob(blob_id)
 
         parts = partial(render_page_content, blob)

@@ -240,7 +240,7 @@ def index_view(page_number, ref):
 
 def page_archive_view_default_ref(year, month, day, slug):
 
-    return page_archive_view(year, month, day, slug, current_app.default_ref)
+    return page_archive_view(year, month, day, slug, None)
 
 
 def page_archive_view(year, month, day, slug, ref):
