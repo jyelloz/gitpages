@@ -1,0 +1,19 @@
+{% macro page_content(title, body, url, date, article_class) %} 
+<article {% if article_class %}class="{{ article_class }}"{% endif %}>
+
+  <header>
+    <h2><a href="{{ url }}">{{ title|typogrify }}</a></h2>
+  </header>
+
+  {{ body|safe }}
+
+  <footer>
+    <p class="info">
+      Posted on <b>{{ date.strftime('%a %d %b %Y') }}</b>
+    </p>
+  </footer>
+
+</article>
+{% endmacro %}
+
+{# vim: set ft=jinja ts=2 sts=2 sw=2 et : #}
