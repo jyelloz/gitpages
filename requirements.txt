@@ -8,6 +8,7 @@ Flask-Script
 ipython
 msgpack-python
 Pygments
+python-dateutil
 pytz
 PyYAML
 titlecase
