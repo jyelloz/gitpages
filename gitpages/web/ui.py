@@ -42,6 +42,12 @@ def create_blueprint():
     )
 
     gitpages_web_ui.add_url_rule(
+        '/index/page/<int:page_number>',
+        'index_view',
+        index_view_default_ref,
+    )
+
+    gitpages_web_ui.add_url_rule(
         '/feed/atom',
         'atom_feed',
         atom_feed,
@@ -228,6 +234,7 @@ def index_view(page_number, ref):
     return render_template(
         'index.html',
         index=results,
+        results_page=results_page,
     )
 
 
@@ -304,6 +311,7 @@ def date_range_index(earliest, latest, ref, page_number):
     return render_template(
         'index.html',
         index=results,
+        results_page=results_page,
     )
 
 

@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% import "page.macros.html" as page_macros %}
+
 {% block page_title -%}
   {{ title|typogrify }} &mdash; {{ super() }}
 {%- endblock page_title %}
@@ -7,21 +9,15 @@
 
 {% block content -%}
 
-  <header class="single-page">
-    <h2><a href="{{ page.to_url() }}">{{ title|typogrify }}</a></h2>
-  </header>
-
-  <article>
-
-    {{ body|safe }}
-
-    <footer>
-      <p class="info">
-        Posted on <b>{{ page.info.date.strftime('%a %d %b %Y') }}</b>
-      </p>
-    </footer>
-
-  </article>
+  {{
+    page_macros.page_content(
+      title,
+      body,
+      page.to_url(),
+      page.info.date,
+      'single',
+    )
+  }}
 
   {% for change in page_history: %}
 
@@ -60,7 +56,6 @@
     {% endif %}
 
   </div>
-
 
 {%- endblock content %}
 
