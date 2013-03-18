@@ -24,7 +24,6 @@ setup(
         'Pygments',
         'python-dateutil',
         'pytz',
-        'titlecase',
         'typogrify',
         'Unidecode',
         'Whoosh',
