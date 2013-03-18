@@ -10,11 +10,11 @@ from .converters import GitRefConverter, UuidConverter
 
 
 @failsafe
-def create():
+def create(*args, **kwargs):
 
     from . import ui
 
-    application = Flask(__name__)
+    application = Flask(__name__, *args, **kwargs)
     application.url_map.converters['git_ref'] = GitRefConverter
     application.url_map.converters['uuid'] = UuidConverter
     application.config.from_object('config')
