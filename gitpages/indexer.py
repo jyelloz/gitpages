@@ -117,6 +117,7 @@ def build_page_history_index(index, repo, ref='HEAD'):
         w.commit(optimize=True)
 
     except:
+
         w.cancel()
         raise
 
