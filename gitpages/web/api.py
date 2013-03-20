@@ -207,6 +207,25 @@ class GitPages(object):
             for r in results
         )
 
+    def recent_pages(
+        self, page_number, page_length, statuses=_default_statuses
+    ):
+
+        query = Or(Term('status', s) for s in statuses)
+
+        results = self._date_searcher.search_page(
+            query,
+            page_number,
+            page_length,
+            sortedby='date',
+            reverse=True,
+        )
+
+        return (
+            GitPages._load_page_info(r)
+            for r in results
+        )
+
     def index(
         self,
         page_number,

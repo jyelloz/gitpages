@@ -59,4 +59,10 @@
 
 {%- endblock content %}
 
+{% block sidebar %}
+  {% with page_infos = recent_pages %}
+    {% include "page.sidebar.html" ignore missing %}
+  {% endwith %}
+{% endblock sidebar %}
+
 {# vim: set ft=jinja ts=2 sts=2 sw=2 et : #}
