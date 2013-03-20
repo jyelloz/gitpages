@@ -78,6 +78,22 @@ class GitPages(object):
             doc=parts,
         )
 
+    def by_path(self, path):
+
+        results = self._date_searcher.search_page(
+            Term('path', path),
+            pagenum=1,
+            pagelen=1,
+        )
+
+        page_result = next(iter(results))
+
+        blob = self._repo.get_blob(page_result['blob_id'])
+
+        parts = partial(render_page_content, blob)
+
+        return GitPages._load_page(page_result, parts)
+
     def page(self, date, slug, ref=None, statuses=_default_statuses):
 
         earliest = datetime(date.year, date.month, date.day)

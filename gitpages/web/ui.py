@@ -355,6 +355,10 @@ def page_to_key(page):
     return page.info.blob_id
 
 
+def page_by_path(path):
+    return page_view(g.gitpages.by_path(path))
+
+
 def page_view(page):
 
     doc = page.doc()
