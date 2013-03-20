@@ -7,7 +7,7 @@
 {% endif %}
 
   <li>
-    <a href="{{ page_info.to_url() }}">{{ page_info.title|typogrify }}</a>
+    <a href="{{ page_info.to_url() }}">{{ page_info.title|smartypants }}</a>
   </li>
 
 {% if loop.last %}
