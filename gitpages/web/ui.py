@@ -373,7 +373,11 @@ def page_view(page):
         statuses=g.allowed_statuses,
     )
 
-    recent_pages = g.gitpages.recent_pages(page_number=1, page_length=5)
+    recent_pages = g.gitpages.recent_pages(
+        page_number=1,
+        page_length=10,
+        statuses=g.allowed_statuses,
+    )
 
     history = g.gitpages.history(
         page,
