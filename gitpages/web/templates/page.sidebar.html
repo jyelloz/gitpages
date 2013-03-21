@@ -1,0 +1,19 @@
+{% for page_info in page_infos %}
+
+{% if loop.first %}
+<h2>Recent Entries</h2>
+
+<ul>
+{% endif %}
+
+  <li>
+    <a href="{{ page_info.to_url() }}">{{ page_info.title|smartypants }}</a>
+  </li>
+
+{% if loop.last %}
+</ul>
+{% endif %}
+
+{% endfor %}
+
+{# vim: set ft=jinja ts=2 sts=2 sw=2 et : #}

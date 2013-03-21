@@ -28,6 +28,15 @@ PageInfo.to_url = lambda self: url_for(
     slug=self.slug,
 )
 
+PageInfo.to_url_tree = lambda self, ref: url_for(
+    '.page_archive_view_ref',
+    ref=ref,
+    year=self.date.year,
+    month=self.date.month,
+    day=self.date.day,
+    slug=self.slug,
+)
+
 
 Page = namedtuple(
     'Page',
@@ -35,6 +44,7 @@ Page = namedtuple(
 )
 
 Page.to_url = lambda self: self.info.to_url()
+Page.to_url_tree = lambda self, ref: self.info.to_url_tree(ref)
 
 
 class GitPages(object):
@@ -68,7 +78,23 @@ class GitPages(object):
             doc=parts,
         )
 
-    def page(self, date, slug, ref, statuses=_default_statuses):
+    def by_path(self, path):
+
+        results = self._date_searcher.search_page(
+            Term('path', path),
+            pagenum=1,
+            pagelen=1,
+        )
+
+        page_result = next(iter(results))
+
+        blob = self._repo.get_blob(page_result['blob_id'])
+
+        parts = partial(render_page_content, blob)
+
+        return GitPages._load_page(page_result, parts)
+
+    def page(self, date, slug, ref=None, statuses=_default_statuses):
 
         earliest = datetime(date.year, date.month, date.day)
         latest = earliest + GitPages._max_timedelta
@@ -91,9 +117,20 @@ class GitPages(object):
             _log.debug('results is empty')
             raise PageNotFound(date, slug, ref)
 
-        page_result = results[0]
+        page_result = next(iter(results))
 
-        blob_id = page_result['blob_id']
+        if ref is None:
+            blob_id = page_result['blob_id']
+        else:
+            historic_results = self._history_searcher.search_page(
+                Term('path', page_result['path']) &
+                Term('tree_id', ref),
+                pagenum=1,
+                pagelen=1,
+            )
+
+            blob_id = next(iter(historic_results))['blob_id']
+
         blob = self._repo.get_blob(blob_id)
 
         parts = partial(render_page_content, blob)
@@ -186,15 +223,52 @@ class GitPages(object):
             for r in results
         )
 
+    def recent_pages(
+        self, page_number, page_length, statuses=_default_statuses
+    ):
+
+        query = Or(Term('status', s) for s in statuses)
+
+        results = self._date_searcher.search_page(
+            query,
+            page_number,
+            page_length,
+            sortedby='date',
+            reverse=True,
+        )
+
+        return (
+            GitPages._load_page_info(r)
+            for r in results
+        )
+
     def index(
         self,
         page_number,
         ref,
+        start_date=None,
+        end_date=None,
+        start_date_excl=False,
+        end_date_excl=False,
         page_length=10,
         statuses=_default_statuses,
     ):
 
-        query = Or(Term('status', s) for s in statuses)
+        status_clause = Or(Term('status', s) for s in statuses)
+
+        if start_date is None or end_date is None:
+
+            query = status_clause
+
+        else:
+
+            query = status_clause & DateRange(
+                'date',
+                start=start_date,
+                end=end_date,
+                startexcl=bool(start_date_excl),
+                endexcl=bool(end_date_excl),
+            )
 
         results = self._date_searcher.search_page(
             query,
@@ -217,7 +291,7 @@ class GitPages(object):
         return (
             GitPages._load_page(r, parts)
             for r, parts in results_parts
-        )
+        ), results
 
     def teardown(self):
         pass

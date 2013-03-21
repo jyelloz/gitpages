@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% import "page.macros.html" as page_macros %}
+
 {% block page_title -%}
   {{ title|typogrify }} &mdash; {{ super() }}
 {%- endblock page_title %}
@@ -7,21 +9,15 @@
 
 {% block content -%}
 
-  <header class="single-page">
-    <h2><a href="{{ page.to_url() }}">{{ title|typogrify }}</a></h2>
-  </header>
-
-  <article>
-
-    {{ body|safe }}
-
-    <footer>
-      <p class="info">
-        Posted on <b>{{ page.info.date.strftime('%a %d %b %Y') }}</b>
-      </p>
-    </footer>
-
-  </article>
+  {{
+    page_macros.page_content(
+      title,
+      body,
+      page.to_url(),
+      page.info.date,
+      'single-page',
+    )
+  }}
 
   {% for change in page_history: %}
 
@@ -31,7 +27,9 @@
     {% endif %}
 
     <li>
-      {{ change.author_time }}:
+      <a href="{{ page.to_url_tree(change.tree_id)|safe }}">
+        {{ change.author_time }}: {{ change.tree_id }}
+      </a>
       <pre>{{ change.message }}</pre>
     </li>
 
@@ -59,7 +57,12 @@
 
   </div>
 
-
 {%- endblock content %}
+
+{% block sidebar %}
+  {% with page_infos = recent_pages %}
+    {% include "page.sidebar.html" ignore missing %}
+  {% endwith %}
+{% endblock sidebar %}
 
 {# vim: set ft=jinja ts=2 sts=2 sw=2 et : #}

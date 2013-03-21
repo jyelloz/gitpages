@@ -4,6 +4,8 @@ import logging
 from datetime import datetime
 from urlparse import urljoin
 
+from dateutil.relativedelta import relativedelta
+
 from flask import (
     Blueprint, current_app, g, render_template, request, redirect, url_for
 )
@@ -40,6 +42,12 @@ def create_blueprint():
     )
 
     gitpages_web_ui.add_url_rule(
+        '/index/page/<int:page_number>',
+        'index_view',
+        index_view_default_ref,
+    )
+
+    gitpages_web_ui.add_url_rule(
         '/feed/atom',
         'atom_feed',
         atom_feed,
@@ -54,13 +62,14 @@ def create_blueprint():
         '/' + '/'.join(
             [
                 'archives',
+                '<git_ref:ref>',
                 '<int(fixed_digits=4):year>',
                 '<int(fixed_digits=2):month>',
                 '<int(fixed_digits=2):day>',
-                '<slug>!<git_ref:ref>',
+                '<slug>',
             ]
         ),
-        'page_archive_view',
+        'page_archive_view_ref',
         page_archive_view,
     )
     gitpages_web_ui.add_url_rule(
@@ -75,6 +84,51 @@ def create_blueprint():
         ) + '/',
         'page_archive_view',
         page_archive_view_default_ref,
+    )
+
+    gitpages_web_ui.add_url_rule(
+        '/' + '/'.join(
+            [
+                'archives',
+                '<int(fixed_digits=4):year>',
+                '<int(fixed_digits=2):month>',
+                '<int(fixed_digits=2):day>',
+            ]
+        ) + '/',
+        'daily_archive',
+        daily_archive_default,
+        defaults={
+            'page_number': 1,
+        },
+    )
+
+    gitpages_web_ui.add_url_rule(
+        '/' + '/'.join(
+            [
+                'archives',
+                '<int(fixed_digits=4):year>',
+                '<int(fixed_digits=2):month>',
+            ]
+        ) + '/',
+        'monthly_archive',
+        monthly_archive_default,
+        defaults={
+            'page_number': 1,
+        },
+    )
+
+    gitpages_web_ui.add_url_rule(
+        '/' + '/'.join(
+            [
+                'archives',
+                '<int(fixed_digits=4):year>',
+            ]
+        ) + '/',
+        'yearly_archive',
+        yearly_archive_default,
+        defaults={
+            'page_number': 1,
+        },
     )
 
     def get_index(index_path, index_name, schema):
@@ -173,25 +227,20 @@ def index_view_default_ref(page_number):
 
 def index_view(page_number, ref):
 
-    results = g.gitpages.index(page_number, ref, statuses=g.allowed_statuses)
-
-    html = render_template(
-        'index.html',
-        index=results,
+    results, results_page = g.gitpages.index(
+        page_number, ref, statuses=g.allowed_statuses
     )
 
-    return (
-        html,
-        200,
-        {
-            'Content-Type': 'text/html; charset=utf-8',
-        },
+    return render_template(
+        'index.html',
+        index=results,
+        results_page=results_page,
     )
 
 
 def page_archive_view_default_ref(year, month, day, slug):
 
-    return page_archive_view(year, month, day, current_app.default_ref)
+    return page_archive_view(year, month, day, slug, None)
 
 
 def page_archive_view(year, month, day, slug, ref):
@@ -206,6 +255,66 @@ def page_archive_view(year, month, day, slug, ref):
         raise NotFound()
 
 
+def daily_archive_default(year, month, day, page_number):
+
+    return daily_archive(
+        year, month, day, current_app.default_ref, page_number
+    )
+
+
+def daily_archive(year, month, day, ref, page_number):
+
+    earliest = g.timezone.localize(datetime(year, month, day))
+    latest = earliest + relativedelta(days=1)
+
+    return date_range_index(earliest, latest, ref, page_number)
+
+
+def monthly_archive_default(year, month, page_number):
+
+    return monthly_archive(year, month, current_app.default_ref, page_number)
+
+
+def monthly_archive(year, month, ref, page_number):
+
+    earliest = g.timezone.localize(datetime(year, month, 1))
+    latest = earliest + relativedelta(months=1)
+
+    return date_range_index(earliest, latest, ref, page_number)
+
+
+def yearly_archive_default(year, page_number):
+
+    return yearly_archive(year, current_app.default_ref, page_number)
+
+
+def yearly_archive(year, ref, page_number):
+
+    earliest = g.timezone.localize(datetime(year, 1, 1))
+    latest = earliest + relativedelta(years=1)
+
+    return date_range_index(earliest, latest, ref, page_number)
+
+
+def date_range_index(earliest, latest, ref, page_number):
+
+    results, results_page = g.gitpages.index(
+        page_number,
+        ref=ref,
+        start_date=earliest,
+        end_date=latest,
+        start_date_excl=False,
+        end_date_excl=True,
+        statuses=g.allowed_statuses,
+    )
+
+    return render_template(
+        'index.html',
+        index=results,
+        results_page=results_page,
+    )
+
+
 def atom_feed():
 
     config = current_app.config
@@ -216,9 +325,9 @@ def atom_feed():
         url=request.url_root,
     )
 
-    results = g.gitpages.index(
+    results, results_page = g.gitpages.index(
         1,
-        ref=config['GITPAGES_DEFAULT_REF'],
+        ref=current_app.default_ref,
         statuses=g.allowed_statuses,
     )
 
@@ -246,6 +355,10 @@ def page_to_key(page):
     return page.info.blob_id
 
 
+def page_by_path(path):
+    return page_view(g.gitpages.by_path(path))
+
+
 def page_view(page):
 
     doc = page.doc()
@@ -264,6 +377,12 @@ def page_view(page):
         statuses=g.allowed_statuses,
     )
 
+    recent_pages = g.gitpages.recent_pages(
+        page_number=1,
+        page_length=10,
+        statuses=g.allowed_statuses,
+    )
+
     history = g.gitpages.history(
         page,
         ref=page.info.ref,
@@ -273,7 +392,7 @@ def page_view(page):
     body = doc['body']
     title = doc['title']
 
-    html = render_template(
+    return render_template(
         'page.html',
         title=title,
         body=body,
@@ -281,12 +400,5 @@ def page_view(page):
         page_prev=next(iter(older), None),
         page_next=next(iter(newer), None),
         page_history=history,
-    )
-
-    return (
-        html,
-        200,
-        {
-            'Content-Type': 'text/html; charset=utf-8',
-        },
+        recent_pages=recent_pages,
     )

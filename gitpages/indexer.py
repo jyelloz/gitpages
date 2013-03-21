@@ -16,7 +16,7 @@ def build_date_index(index, repo, ref='HEAD'):
     def visitor(pages):
 
         for path, page, page_rst_entry in pages:
-            _log.debug('visiting blob %r @ %r', page_rst_entry.sha, path)
+            _log.debug('visiting blob %r@%r', page_rst_entry.sha, path)
             yield path, page, page_rst_entry
 
     pages_tree = git_storage.get_pages_tree(repo, ref)
@@ -96,10 +96,16 @@ def build_page_history_index(index, repo, ref='HEAD'):
             )
 
             for path in paths:
+
+                tree_id = c.tree
+                tree = repo.tree(tree_id)
+                mode, blob_id = tree.lookup_path(repo.get_object, path)
+
                 w.add_document(
                     ref=unicode(ref),
                     commit_id=unicode(c.id),
-                    tree_id=unicode(c.tree),
+                    tree_id=unicode(tree_id),
+                    blob_id=unicode(blob_id),
                     author=unicode(c.author),
                     committer=unicode(c.committer),
                     commit_time=commit_time,
@@ -111,6 +117,7 @@ def build_page_history_index(index, repo, ref='HEAD'):
         w.commit(optimize=True)
 
     except:
+
         w.cancel()
         raise
 

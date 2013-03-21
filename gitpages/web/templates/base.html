@@ -9,7 +9,7 @@
         {{ site_title }}
       {%- endblock page_title -%}
     </title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    {%- block head -%}{%- include "head.html" ignore missing -%}{%- endblock head %}
     <link href="{{ url_for('.atom_feed') }}"
           rel="alternate"
           title="{{ site_title }}"

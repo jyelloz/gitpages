@@ -1,16 +1,15 @@
 bpython
 docutils
 dulwich
-ez_setup
 Flask
 Flask-Failsafe
 Flask-Script
 ipython
 msgpack-python
 Pygments
+python-dateutil
 pytz
 PyYAML
-titlecase
 typogrify
 Unidecode
 Whoosh
