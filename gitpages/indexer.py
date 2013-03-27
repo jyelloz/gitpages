@@ -8,6 +8,32 @@ from .storage import git as git_storage
 _log = logging.getLogger(__name__)
 
 
+def get_index(index_path, index_name, schema):
+
+    from os import makedirs
+    from os.path import isdir
+
+    from whoosh import index
+
+    try:
+        makedirs(index_path)
+    except:
+        if not isdir(index_path):
+            raise
+
+    if index.exists_in(index_path, index_name):
+        return index.open_dir(
+            index_path,
+            indexname=index_name,
+        )
+
+    return index.create_in(
+        index_path,
+        schema=schema,
+        indexname=index_name,
+    )
+
+
 def build_date_index(index, repo, ref='HEAD'):
 
     from .util import slugify
