@@ -43,10 +43,19 @@ class RevisionHistory(SchemaClass):
 
 class DateRevisionHybrid(SchemaClass):
 
+    __kind_page__ = u'page'
+    __kind_revision__ = u'revision'
+    __kinds__ = (
+        __kind_page__,
+        __kind_revision__,
+    )
+
     kind = ID(stored=True)
+    date = DATETIME(stored=True)
     slug = ID(stored=True)
     title = TEXT(stored=True)
     status = ID(stored=True)
+    path = ID(stored=True)
 
     author = ID(stored=True)
     committer = ID(stored=True)
@@ -54,7 +63,6 @@ class DateRevisionHybrid(SchemaClass):
     author_time = DATETIME(stored=True)
     commit_time = DATETIME(stored=True)
 
-    path = ID(stored=True)
     blob_id = ID(stored=True)
     commit_id = ID(stored=True)
     tree_id = ID(stored=True)
