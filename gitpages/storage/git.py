@@ -11,11 +11,13 @@ def iterable_nth(iterable, n, default=None):
     return next(itertools.islice(iterable, n, None), default)
 
 
-def get_pages_tree(repository, ref='HEAD'):
+def get_pages_tree(repository, ref='HEAD', commit=None):
 
-    commit = repository.commit(repository.refs[ref])
-
-    root = repository.tree(commit.tree)
+    if commit is None:
+        ref_commit = repository.commit(repository.refs[ref])
+        root = repository(ref_commit.tree)
+    else:
+        root = repository.tree(commit.tree)
 
     return repository.tree(root['page'][1])
 

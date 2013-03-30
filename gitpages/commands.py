@@ -3,32 +3,29 @@ from flask.ext.script import Command
 
 from .web import ui
 
-from .indexer import build_date_index, build_page_history_index
+from .indexer import build_hybrid_index
 
 
 class BuildIndex(Command):
-    '(re)builds GitPages indexes'
+    '(re)builds GitPages index'
 
     def handle(self, app, *args, **kwargs):
 
         with app.test_request_context():
-            try:
-                ui.setup_gitpages_application()
-                ui.setup_gitpages()
-                return self.run(*args, **kwargs)
-            finally:
-                ui.teardown_gitpages()
+            ui.setup_gitpages_application()
+            ui.setup_gitpages()
+            return self.run(*args, **kwargs)
 
     def run(self):
 
-        build_page_history_index(
-            index=current_app.history_index,
-            repo=current_app.repo,
-            ref=current_app.default_ref,
-        )
+        from whoosh.query import Every
 
-        build_date_index(
-            index=current_app.date_index,
+        index = current_app.index
+
+        index.delete_by_query(Every())
+
+        build_hybrid_index(
+            index=index,
             repo=current_app.repo,
             ref=current_app.default_ref,
         )

@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from datetime import datetime
+
+from dateutil.parser import parse as parse_date
+from dateutil.tz import tzoffset
+from dulwich.walk import Walker
 
 from .storage import git as git_storage
+from .util import slugify
 
 
 _log = logging.getLogger(__name__)
@@ -34,23 +40,80 @@ def get_index(index_path, index_name, schema):
     )
 
 
-def build_date_index(index, repo, ref='HEAD'):
+def build_hybrid_index(index, repo, ref='HEAD'):
 
-    from .util import slugify
-    from dateutil.parser import parse as parse_date
+    head = repo.refs[ref]
 
-    def visitor(pages):
+    def get_revisions(path):
+        return Walker(
+            store=repo.object_store, include=[head], paths=[path], follow=True
+        )
 
-        for path, page, page_rst_entry in pages:
-            _log.debug('visiting blob %r@%r', page_rst_entry.sha, path)
-            yield path, page, page_rst_entry
+    def write_page(writer, path, page, attachments):
 
-    pages_tree = git_storage.get_pages_tree(repo, ref)
+        doctree = read_page_rst(page.data)
+        title = get_title(doctree)
+        docinfo = get_docinfo_as_dict(doctree)
 
-    pages = git_storage.find_pages(repo, pages_tree)
-    pages_visited = visitor(pages)
+        slug = slugify(title)
+        date = parse_date(docinfo['date'])
+        status = docinfo['status']
+        blob_id = unicode(page.id)
 
-    pages_data = git_storage.load_pages_with_attachments(repo, pages_visited)
+        writer.add_document(
+            kind=u'page',
+            date=date,
+            slug=slug,
+            title=unicode(title),
+            status=unicode(status),
+            blob_id=blob_id,
+            path=unicode(path),
+        )
+
+    def write_revision(writer, commit, path):
+
+        tree_id = commit.tree
+        tree = repo.tree(tree_id)
+        mode, blob_id = tree.lookup_path(repo.get_object, path)
+
+        commit_time = datetime.fromtimestamp(
+            commit.commit_time,
+            tzoffset(None, commit.commit_timezone),
+        )
+
+        author_time = datetime.fromtimestamp(
+            commit.author_time,
+            tzoffset(None, commit.author_timezone),
+        )
+
+        page_blob = repo.get_blob(blob_id)
+
+        doctree = read_page_rst(page_blob.data)
+        title = get_title(doctree)
+        docinfo = get_docinfo_as_dict(doctree)
+        date = parse_date(docinfo['date'])
+        status = docinfo['status']
+
+        writer.add_document(
+            kind=u'revision',
+            commit_id=unicode(commit.id),
+            tree_id=unicode(tree_id),
+            blob_id=unicode(blob_id),
+            author=unicode(commit.author),
+            committer=unicode(commit.committer),
+            commit_time=commit_time,
+            author_time=author_time,
+            message=unicode(commit.message),
+            status=unicode(status),
+            title=unicode(title),
+            date=date,
+        )
+
+    head_pages_tree = git_storage.get_pages_tree(repo, ref)
+
+    pages = git_storage.find_pages(repo, head_pages_tree)
+
+    pages_data = git_storage.load_pages_with_attachments(repo, pages)
 
     w = index.writer()
 
@@ -58,87 +121,14 @@ def build_date_index(index, repo, ref='HEAD'):
 
         for path, page, attachments in pages_data:
 
-            doctree = read_page_rst(page.data)
-            title = get_title(doctree)
-            docinfo = get_docinfo_as_dict(doctree)
+            w.start_group()
 
-            slug = slugify(title)
-            date = parse_date(docinfo['date'])
-            status = docinfo['status']
-            blob_id = unicode(page.id)
+            write_page(w, path, page, attachments)
+            revisions = get_revisions(path)
+            for revision in revisions:
+                write_revision(w, revision.commit, path)
 
-            w.add_document(
-                date=date,
-                slug=slug,
-                title=unicode(title),
-                ref_id=unicode(ref),
-                status=unicode(status),
-                blob_id=blob_id,
-                blob_id__ref_id=(blob_id, ref),
-                path=unicode(path),
-            )
-
-        w.commit(optimize=True)
-
-    except:
-
-        w.cancel()
-        raise
-
-
-def build_page_history_index(index, repo, ref='HEAD'):
-
-    from datetime import datetime
-    from dateutil.tz import tzoffset
-
-    from dulwich.walk import Walker
-
-    head = repo.ref(ref)
-
-    walker = Walker(repo.object_store, [head])
-
-    w = index.writer()
-
-    try:
-
-        for entry in walker:
-
-            c = entry.commit
-
-            commit_time = datetime.fromtimestamp(
-                c.commit_time,
-                tzoffset(None, c.commit_timezone),
-            )
-
-            author_time = datetime.fromtimestamp(
-                c.author_time,
-                tzoffset(None, c.author_timezone),
-            )
-
-            paths = (
-                unicode(change.new.path)
-                for change in entry.changes()
-                if change.new.path is not None
-            )
-
-            for path in paths:
-
-                tree_id = c.tree
-                tree = repo.tree(tree_id)
-                mode, blob_id = tree.lookup_path(repo.get_object, path)
-
-                w.add_document(
-                    ref=unicode(ref),
-                    commit_id=unicode(c.id),
-                    tree_id=unicode(tree_id),
-                    blob_id=unicode(blob_id),
-                    author=unicode(c.author),
-                    committer=unicode(c.committer),
-                    commit_time=commit_time,
-                    author_time=author_time,
-                    message=unicode(c.message),
-                    path=path,
-                )
+            w.end_group()
 
         w.commit(optimize=True)
 

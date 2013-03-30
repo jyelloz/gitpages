@@ -13,7 +13,7 @@ from werkzeug.exceptions import NotFound
 from werkzeug.contrib.atom import AtomFeed
 
 from .exceptions import PageNotFound
-from .schema import ByDate, RevisionHistory
+from .schema import DateRevisionHybrid
 from .api import GitPages
 from ..indexer import get_index
 
@@ -59,7 +59,7 @@ def create_blueprint():
         '/' + '/'.join(
             [
                 'archives',
-                '<git_ref:ref>',
+                '<git_ref:tree_id>',
                 '<int(fixed_digits=4):year>',
                 '<int(fixed_digits=2):month>',
                 '<int(fixed_digits=2):day>',
@@ -144,34 +144,26 @@ def setup_gitpages_application():
     repo = config['GITPAGES_REPOSITORY']
     ref = config['GITPAGES_DEFAULT_REF']
 
-    date_index = get_index(
+    index = get_index(
         config['GITPAGES_DATE_INDEX_PATH'],
-        'date_index',
-        ByDate(),
-    )
-    history_index = get_index(
-        config['GITPAGES_HISTORY_INDEX_PATH'],
-        'history_index',
-        RevisionHistory(),
+        'index',
+        DateRevisionHybrid(),
     )
 
     current_app.repo = repo
     current_app.default_ref = ref
     current_app.allowed_statuses = config['GITPAGES_ALLOWED_STATUSES']
     current_app.timezone = config['TIMEZONE']
-    current_app.date_index = date_index
-    current_app.history_index = history_index
+    current_app.index = index
 
 
 def setup_gitpages():
     g.timezone = current_app.timezone
     g.utcnow = datetime.utcnow()
-    g.date_searcher = current_app.date_index.searcher()
-    g.history_searcher = current_app.history_index.searcher()
+    g.searcher = current_app.index.searcher()
     g.gitpages = GitPages(
         current_app.repo,
-        g.date_searcher,
-        g.history_searcher
+        g.searcher,
     )
     g.allowed_statuses = current_app.allowed_statuses
 
@@ -179,17 +171,13 @@ def setup_gitpages():
 def teardown_gitpages(exception=None):
 
     gitpages = getattr(g, 'gitpages', None)
-    date_searcher = getattr(g, 'date_searcher', None)
-    history_searcher = getattr(g, 'history_searcher', None)
+    searcher = getattr(g, 'searcher', None)
 
     if gitpages is not None:
         gitpages.teardown()
 
-    if date_searcher is not None:
-        date_searcher.close()
-
-    if history_searcher is not None:
-        history_searcher.close()
+    if searcher is not None:
+        searcher.close()
 
 
 def index_view_default_ref(page_number):
@@ -215,12 +203,12 @@ def page_archive_view_default_ref(year, month, day, slug):
     return page_archive_view(year, month, day, slug, None)
 
 
-def page_archive_view(year, month, day, slug, ref):
+def page_archive_view(year, month, day, slug, tree_id):
 
     try:
 
         date = g.timezone.localize(datetime(year, month, day))
-        page = g.gitpages.page(date, slug, ref, statuses=g.allowed_statuses)
+        page = g.gitpages.page(date, slug, tree_id, g.allowed_statuses)
         return page_view(page)
 
     except PageNotFound:
@@ -357,8 +345,8 @@ def page_view(page):
 
     history = g.gitpages.history(
         page,
-        ref=page.info.ref,
         page_number=1,
+        statuses=g.allowed_statuses,
     )
 
     body = doc['body']
