@@ -15,7 +15,7 @@ def get_pages_tree(repository, ref='HEAD', commit=None):
 
     if commit is None:
         ref_commit = repository.commit(repository.refs[ref])
-        root = repository(ref_commit.tree)
+        root = repository.tree(ref_commit.tree)
     else:
         root = repository.tree(commit.tree)
 
