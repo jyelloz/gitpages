@@ -47,6 +47,10 @@ Page.to_url = lambda self: self.info.to_url()
 Page.to_url_tree = lambda self, tree_id: self.info.to_url_tree(tree_id)
 
 
+def statuses_query(statuses):
+    return Or([Term('status', s) for s in statuses])
+
+
 class GitPages(object):
 
     _max_timedelta = timedelta(days=1)
@@ -124,24 +128,17 @@ class GitPages(object):
         else:
 
             pq = Term('kind', 'page')
-            cq = Term('path', page_result['path'])
-            q = (
-                NestedChildren(pq, cq)
-                # # Or(Term('status', s) for s in statuses) &
-                # Term('tree_id', tree_id)
-            )
+            cq = Term('path', page_result['path']) & statuses_query(statuses)
+            q = NestedChildren(pq, cq)
+
+            tree_id_term = Term('tree_id', tree_id) & statuses_query(statuses)
+
             historic_results = self._searcher.search(
                 q,
-                # pagenum=1,
-                # pagelen=1,
+                filter=tree_id_term,
             )
 
-            for r in historic_results:
-                print r
-
-            tree_id_matches = (r for r in historic_results if r['tree_id'] == tree_id)
-
-            blob_id = next(tree_id_matches)['blob_id']
+            blob_id = next(iter(historic_results))['blob_id']
 
         blob = self._repo.get_blob(blob_id)
 
@@ -160,13 +157,14 @@ class GitPages(object):
         path = page.info.path
 
         pq = Term('kind', 'page')
-        cq = Term('path', path)
+        cq = Term('path', path) & statuses_query(statuses)
 
         q = NestedChildren(pq, cq)
-        # TODO: ensure the status of the post allows viewing
+        filter_query = statuses_query(statuses)
 
         results = self._searcher.search_page(
             q,
+            filter=filter_query,
             pagenum=page_number,
             pagelen=page_length,
             sortedby='commit_time',
