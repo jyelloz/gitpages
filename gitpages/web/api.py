@@ -102,10 +102,12 @@ class GitPages(object):
         earliest = datetime(date.year, date.month, date.day)
         latest = earliest + GitPages._max_timedelta
 
+        statuses_clause = statuses_query(statuses)
+
         query = (
             Term('kind', u'page') &
             Term('slug', unicode(slug)) &
-            statuses_query(statuses) &
+            statuses_clause &
             DateRange(
                 'date',
                 start=earliest,
@@ -128,10 +130,10 @@ class GitPages(object):
         else:
 
             pq = Term('kind', 'page')
-            cq = Term('path', page_result['path']) & statuses_query(statuses)
+            cq = Term('path', page_result['path']) & statuses_clause
             q = NestedChildren(pq, cq)
 
-            tree_id_term = Term('tree_id', tree_id) & statuses_query(statuses)
+            tree_id_term = Term('tree_id', tree_id) & statuses_clause
 
             historic_results = self._searcher.search(
                 q,
@@ -156,15 +158,16 @@ class GitPages(object):
 
         path = page.info.path
 
+        statuses_clause = statuses_query(statuses)
+
         pq = Term('kind', 'page')
-        cq = Term('path', path) & statuses_query(statuses)
+        cq = Term('path', path) & statuses_clause
 
         q = NestedChildren(pq, cq)
-        filter_query = statuses_query(statuses)
 
         results = self._searcher.search_page(
             q,
-            filter=filter_query,
+            filter=statuses_clause,
             pagenum=page_number,
             pagelen=page_length,
             sortedby='commit_time',
