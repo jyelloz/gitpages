@@ -121,14 +121,12 @@ def build_hybrid_index(index, repo, ref='HEAD'):
 
         for path, page, attachments in pages_data:
 
-            w.start_group()
+            with w.group():
 
-            write_page(w, path, page, attachments)
-            revisions = get_revisions(path)
-            for revision in revisions:
-                write_revision(w, revision.commit, path)
-
-            w.end_group()
+                write_page(w, path, page, attachments)
+                revisions = get_revisions(path)
+                for revision in revisions:
+                    write_revision(w, revision.commit, path)
 
         w.commit(optimize=True)
 
