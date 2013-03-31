@@ -105,7 +105,7 @@ class GitPages(object):
         query = (
             Term('kind', u'page') &
             Term('slug', unicode(slug)) &
-            Or(Term('status', s) for s in statuses) &
+            statuses_query(statuses) &
             DateRange(
                 'date',
                 start=earliest,
@@ -186,7 +186,7 @@ class GitPages(object):
 
         query = (
             Term('kind', u'page') &
-            Or(Term('status', s) for s in statuses) &
+            statuses_query(statuses) &
             DateRange(
                 'date',
                 start=None,
@@ -222,7 +222,7 @@ class GitPages(object):
 
         query = (
             Term('kind', u'page') &
-            Or(Term('status', s) for s in statuses) &
+            statuses_query(statuses) &
             DateRange(
                 'date',
                 start=earliest,
@@ -249,7 +249,7 @@ class GitPages(object):
         self, page_number, page_length, statuses=_default_statuses
     ):
 
-        query = Term('kind', u'page') & Or(Term('status', s) for s in statuses)
+        query = Term('kind', u'page') & statuses_query(statuses)
 
         results = self._searcher.search_page(
             query,
@@ -276,7 +276,7 @@ class GitPages(object):
         statuses=_default_statuses,
     ):
 
-        status_clause = Or(Term('status', s) for s in statuses)
+        status_clause = statuses_query(statuses)
 
         if start_date is None or end_date is None:
 
