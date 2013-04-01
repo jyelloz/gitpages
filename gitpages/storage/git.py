@@ -14,7 +14,7 @@ def iterable_nth(iterable, n, default=None):
 def get_pages_tree(repository, ref='HEAD', commit=None):
 
     if commit is None:
-        ref_commit = repository.commit(repository.refs[ref])
+        ref_commit = repository[repository.refs[ref]]
         root = repository[ref_commit.tree]
     else:
         root = repository[commit.tree]
