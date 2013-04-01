@@ -4,12 +4,9 @@ dulwich
 Flask
 Flask-Failsafe
 Flask-Script
-ipython
-msgpack-python
 Pygments
 python-dateutil
 pytz
-PyYAML
 typogrify
 Unidecode
 Whoosh
