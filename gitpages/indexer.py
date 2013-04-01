@@ -154,10 +154,10 @@ def get_title(doctree):
 def get_docinfo_as_dict(doctree):
 
     def field_to_tuple(field):
-        children = {
-            c.tagname: c
+        children = dict(
+            (c.tagname, c)
             for c in field.children
-        }
+        )
 
         return (
             str(children['field_name'].astext()),
