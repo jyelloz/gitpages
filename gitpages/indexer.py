@@ -73,7 +73,7 @@ def build_hybrid_index(index, repo, ref='HEAD'):
     def write_revision(writer, commit, path):
 
         tree_id = commit.tree
-        tree = repo.tree(tree_id)
+        tree = repo[tree_id]
         mode, blob_id = tree.lookup_path(repo.get_object, path)
 
         commit_time = datetime.fromtimestamp(
