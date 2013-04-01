@@ -60,7 +60,7 @@ def find_page_rst_entry(page_tree):
 
 def load_page_data(repository, page_rst_entry):
 
-    return repository.get_blob(page_rst_entry.sha)
+    return repository[page_rst_entry.sha]
 
 
 def load_page_attachments(repository, page_tree):
@@ -76,8 +76,8 @@ def load_page_attachments(repository, page_tree):
             if i.path == 'data'
         )
 
-        metadata = repository.get_blob(metadata_rst.sha).data
-        data_callable = functools.partial(repository.get_blob, data.sha)
+        metadata = repository[metadata_rst.sha].data
+        data_callable = functools.partial(getattr, repository, data.sha)
 
         return metadata, data_callable
 

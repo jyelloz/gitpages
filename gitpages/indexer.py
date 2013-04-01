@@ -86,7 +86,7 @@ def build_hybrid_index(index, repo, ref='HEAD'):
             tzoffset(None, commit.author_timezone),
         )
 
-        page_blob = repo.get_blob(blob_id)
+        page_blob = repo[blob_id]
 
         doctree = read_page_rst(page_blob.data)
         title = get_title(doctree)

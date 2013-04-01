@@ -91,7 +91,7 @@ class GitPages(object):
 
         page_result = next(iter(results))
 
-        blob = self._repo.get_blob(page_result['blob_id'])
+        blob = self._repo[page_result['blob_id']]
 
         parts = partial(render_page_content, blob)
 
@@ -142,7 +142,7 @@ class GitPages(object):
 
             blob_id = next(iter(historic_results))['blob_id']
 
-        blob = self._repo.get_blob(blob_id)
+        blob = self._repo[blob_id]
 
         parts = partial(render_page_content, blob)
 
@@ -304,7 +304,7 @@ class GitPages(object):
         )
 
         results_blobs = (
-            (r, self._repo.get_blob(r['blob_id']))
+            (r, self._repo[r['blob_id']])
             for r in results
         )
 
