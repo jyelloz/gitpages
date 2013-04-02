@@ -13,18 +13,15 @@ from werkzeug.exceptions import NotFound
 from werkzeug.contrib.atom import AtomFeed
 
 from .exceptions import PageNotFound
-from .schema import ByDate, RevisionHistory
+from .schema import DateRevisionHybrid
 from .api import GitPages
-from ..indexer import build_date_index, build_page_history_index
+from ..indexer import get_index
 
 
 _log = logging.getLogger(__name__)
 
 
 def create_blueprint():
-
-    from whoosh import index
-    from whoosh.query import Every
 
     gitpages_web_ui = Blueprint(
         'gitpages_web_ui',
@@ -62,7 +59,7 @@ def create_blueprint():
         '/' + '/'.join(
             [
                 'archives',
-                '<git_ref:ref>',
+                '<git_ref:tree_id>',
                 '<int(fixed_digits=4):year>',
                 '<int(fixed_digits=2):month>',
                 '<int(fixed_digits=2):day>',
@@ -131,93 +128,56 @@ def create_blueprint():
         },
     )
 
-    def get_index(index_path, index_name, schema):
-
-        from os import makedirs
-        from os.path import isdir
-
-        try:
-            makedirs(index_path)
-        except:
-            if not isdir(index_path):
-                raise
-
-        if index.exists_in(index_path, index_name):
-            return index.open_dir(
-                index_path,
-                indexname=index_name,
-            )
-
-        return index.create_in(
-            index_path,
-            schema=schema,
-            indexname=index_name,
-        )
-
-    @gitpages_web_ui.before_app_first_request
-    def setup_gitpages_application():
-
-        _log.debug('setting up blueprint')
-
-        config = current_app.config
-
-        repo = config['GITPAGES_REPOSITORY']
-        ref = config['GITPAGES_DEFAULT_REF']
-
-        date_index = get_index(
-            config['GITPAGES_DATE_INDEX_PATH'],
-            'date_index',
-            ByDate(),
-        )
-        history_index = get_index(
-            config['GITPAGES_HISTORY_INDEX_PATH'],
-            'history_index',
-            RevisionHistory(),
-        )
-
-        date_index.delete_by_query(Every())
-        history_index.delete_by_query(Every())
-
-        build_date_index(date_index, repo, ref)
-        build_page_history_index(history_index, repo, ref)
-
-        current_app.repo = repo
-        current_app.default_ref = ref
-        current_app.allowed_statuses = config['GITPAGES_ALLOWED_STATUSES']
-        current_app.timezone = config['TIMEZONE']
-        current_app.date_index = date_index
-        current_app.history_index = history_index
-
-    @gitpages_web_ui.before_request
-    def setup_gitpages():
-        g.timezone = current_app.timezone
-        g.utcnow = datetime.utcnow()
-        g.date_searcher = current_app.date_index.searcher()
-        g.history_searcher = current_app.history_index.searcher()
-        g.gitpages = GitPages(
-            current_app.repo,
-            g.date_searcher,
-            g.history_searcher
-        )
-        g.allowed_statuses = current_app.allowed_statuses
-
-    @gitpages_web_ui.teardown_request
-    def teardown_gitpages(exception=None):
-
-        gitpages = getattr(g, 'gitpages', None)
-        date_searcher = getattr(g, 'date_searcher', None)
-        history_searcher = getattr(g, 'history_searcher', None)
-
-        if gitpages is not None:
-            gitpages.teardown()
-
-        if date_searcher is not None:
-            date_searcher.close()
-
-        if history_searcher is not None:
-            history_searcher.close()
+    gitpages_web_ui.before_app_first_request(setup_gitpages_application)
+    gitpages_web_ui.before_request(setup_gitpages)
+    gitpages_web_ui.teardown_request(teardown_gitpages)
 
     return gitpages_web_ui
+
+
+def setup_gitpages_application():
+
+    _log.debug('setting up blueprint')
+
+    config = current_app.config
+
+    repo = config['GITPAGES_REPOSITORY']
+    ref = config['GITPAGES_DEFAULT_REF']
+
+    index = get_index(
+        config['GITPAGES_DATE_INDEX_PATH'],
+        'index',
+        DateRevisionHybrid(),
+    )
+
+    current_app.repo = repo
+    current_app.default_ref = ref
+    current_app.allowed_statuses = config['GITPAGES_ALLOWED_STATUSES']
+    current_app.timezone = config['TIMEZONE']
+    current_app.index = index
+
+
+def setup_gitpages():
+    g.timezone = current_app.timezone
+    g.utcnow = datetime.utcnow()
+    g.searcher = current_app.index.searcher()
+    g.gitpages = GitPages(
+        current_app.repo,
+        g.searcher,
+    )
+    g.allowed_statuses = current_app.allowed_statuses
+
+
+def teardown_gitpages(exception=None):
+
+    gitpages = getattr(g, 'gitpages', None)
+    searcher = getattr(g, 'searcher', None)
+
+    if gitpages is not None:
+        gitpages.teardown()
+
+    if searcher is not None:
+        searcher.close()
 
 
 def index_view_default_ref(page_number):
@@ -243,12 +203,12 @@ def page_archive_view_default_ref(year, month, day, slug):
     return page_archive_view(year, month, day, slug, None)
 
 
-def page_archive_view(year, month, day, slug, ref):
+def page_archive_view(year, month, day, slug, tree_id):
 
     try:
 
         date = g.timezone.localize(datetime(year, month, day))
-        page = g.gitpages.page(date, slug, ref, statuses=g.allowed_statuses)
+        page = g.gitpages.page(date, slug, tree_id, g.allowed_statuses)
         return page_view(page)
 
     except PageNotFound:
@@ -385,8 +345,8 @@ def page_view(page):
 
     history = g.gitpages.history(
         page,
-        ref=page.info.ref,
         page_number=1,
+        statuses=g.allowed_statuses,
     )
 
     body = doc['body']

@@ -11,20 +11,22 @@ def iterable_nth(iterable, n, default=None):
     return next(itertools.islice(iterable, n, None), default)
 
 
-def get_pages_tree(repository, ref='HEAD'):
+def get_pages_tree(repository, ref='HEAD', commit=None):
 
-    commit = repository.commit(repository.refs[ref])
+    if commit is None:
+        ref_commit = repository[repository.refs[ref]]
+        root = repository[ref_commit.tree]
+    else:
+        root = repository[commit.tree]
 
-    root = repository.tree(commit.tree)
-
-    return repository.tree(root['page'][1])
+    return repository[root['page'][1]]
 
 
 def find_pages(repository, pages_tree, prefix=PAGES_TREE):
 
     page_entries = pages_tree.iteritems()
 
-    page_trees = ((e.path, repository.tree(e.sha)) for e in page_entries)
+    page_trees = ((e.path, repository[e.sha]) for e in page_entries)
 
     page_trees_with_rst_entries = (
         (p, t, find_page_rst_entry(t))
@@ -58,7 +60,7 @@ def find_page_rst_entry(page_tree):
 
 def load_page_data(repository, page_rst_entry):
 
-    return repository.get_blob(page_rst_entry.sha)
+    return repository[page_rst_entry.sha]
 
 
 def load_page_attachments(repository, page_tree):
@@ -74,8 +76,8 @@ def load_page_attachments(repository, page_tree):
             if i.path == 'data'
         )
 
-        metadata = repository.get_blob(metadata_rst.sha).data
-        data_callable = functools.partial(repository.get_blob, data.sha)
+        metadata = repository[metadata_rst.sha].data
+        data_callable = functools.partial(getattr, repository, data.sha)
 
         return metadata, data_callable
 
@@ -86,10 +88,10 @@ def load_page_attachments(repository, page_tree):
     if attachments is None:
         return []
 
-    page_attachments_tree = repository.tree(attachments.sha)
+    page_attachments_tree = repository[attachments.sha]
 
     page_attachment_trees = (
-        repository.tree(t.sha) for t in page_attachments_tree.iteritems()
+        repository[t.sha] for t in page_attachments_tree.iteritems()
     )
 
     return (load_page_attachment(t) for t in page_attachment_trees)

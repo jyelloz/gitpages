@@ -17,7 +17,9 @@ setup(
         'gitpages.web',
         'gitpages.storage',
     ],
+    include_package_data=True,
     install_requires=[
+        'distribute',
         'docutils',
         'dulwich',
         'Flask',
