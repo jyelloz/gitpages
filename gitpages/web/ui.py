@@ -145,7 +145,7 @@ def setup_gitpages_application():
     ref = config['GITPAGES_DEFAULT_REF']
 
     index = get_index(
-        config['GITPAGES_DATE_INDEX_PATH'],
+        config['GITPAGES_INDEX_PATH'],
         'index',
         DateRevisionHybrid(),
     )
