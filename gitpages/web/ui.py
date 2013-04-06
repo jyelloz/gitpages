@@ -65,7 +65,7 @@ def create_blueprint():
                 '<int(fixed_digits=2):day>',
                 '<slug>',
             ]
-        ),
+        ) + '/',
         'page_archive_view_ref',
         page_archive_view,
     )
