@@ -2,7 +2,6 @@
 
 from flask import Flask
 from flask_failsafe import failsafe
-from jinja2 import ChoiceLoader, FileSystemLoader
 
 from typogrify.templatetags.jinja_filters import register as register_typogrify
 
