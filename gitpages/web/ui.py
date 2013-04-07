@@ -39,7 +39,7 @@ def create_blueprint():
     )
 
     gitpages_web_ui.add_url_rule(
-        '/index/page/<int:page_number>',
+        '/index/page/<int:page_number>/',
         'index_view',
         index_view_default_ref,
     )
