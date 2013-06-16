@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='GitPages',
-    version='0.1.2',
+    version='0.1.3',
     license='MIT',
     url='https://jordan.yelloz.me/projects/gitpages/',
     author='Jordan Yelloz',
@@ -27,7 +27,7 @@ setup(
         'Flask-Script',
         'Pygments',
         'python-dateutil',
-        'pytz',
+        'pytz>=2013b',
         'typogrify',
         'Unidecode',
         'Whoosh',

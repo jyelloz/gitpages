@@ -153,7 +153,7 @@ class GitPages(object):
         page,
         page_number,
         page_length=10,
-        statuses=_default_statuses
+        statuses=_default_statuses,
     ):
 
         path = page.info.path

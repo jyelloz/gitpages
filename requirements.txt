@@ -1,4 +1,5 @@
 bpython
+distribute
 docutils
 dulwich
 Flask
