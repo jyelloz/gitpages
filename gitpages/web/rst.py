@@ -29,6 +29,15 @@ class GitPagesHTMLTranslator(HTMLTranslator):
     def __init__(self, document):
         HTMLTranslator.__init__(self, document)
 
+    def starttag(self, node, tagname, *args, **kwargs):
+        return HTMLTranslator.starttag(
+            self,
+            node,
+            'code' if tagname.lower() == 'tt' else tagname,
+            *args,
+            **kwargs
+        )
+
     def visit_strikethrough(self, node):
         self.body.append(self.starttag(node, 'del', ''))
 
