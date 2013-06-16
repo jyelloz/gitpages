@@ -27,7 +27,7 @@ setup(
         'Flask-Script',
         'Pygments',
         'python-dateutil',
-        'pytz',
+        'pytz>=2013b',
         'typogrify',
         'Unidecode',
         'Whoosh',
