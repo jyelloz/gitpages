@@ -5,8 +5,8 @@ from setuptools import setup
 setup(
     name='GitPages',
     version='0.1.3',
-    license='MIT',
-    url='https://jordan.yelloz.me/projects/gitpages/',
+    license='GPLv2',
+    url='https://jordan.yelloz.me',
     author='Jordan Yelloz',
     author_email='jordan@yelloz.me',
     description='Git-backed web publishing code',
