@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='GitPages',
-    version='0.1.3',
+    version='0.1.3.1',
     license='GPLv2',
     url='https://jordan.yelloz.me',
     author='Jordan Yelloz',
