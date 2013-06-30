@@ -3,7 +3,7 @@
 {% import "page.macros.html" as page_macros %}
 
 {% block page_title -%}
-  {{ title|typogrify }} &mdash; {{ super() }}
+  {{ title|smartypants }} &mdash; {{ super() }}
 {%- endblock page_title %}
 
 
