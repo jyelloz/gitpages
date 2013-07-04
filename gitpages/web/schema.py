@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from whoosh.fields import SchemaClass, ID, DATETIME, TEXT
+from whoosh.fields import SchemaClass, ID, DATETIME, TEXT, NUMERIC
 
 
 class DateRevisionHybrid(SchemaClass):
@@ -23,3 +23,7 @@ class DateRevisionHybrid(SchemaClass):
     blob_id = ID(stored=True)
     commit_id = ID(stored=True)
     tree_id = ID(stored=True)
+
+    filename = ID(stored=True)
+    content_length = NUMERIC(stored=True)
+    content_type = ID(stored=True)
