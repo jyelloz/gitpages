@@ -319,7 +319,7 @@ def page_by_path(path):
     return page_view(g.gitpages.by_path(path))
 
 
-def page_view(page):
+def page_view(page, template=None):
 
     doc = page.doc()
     older = g.gitpages.older_pages(
@@ -353,7 +353,7 @@ def page_view(page):
     title = doc['title']
 
     return render_template(
-        'page.html',
+        template or 'page.html',
         title=title,
         body=body,
         page=page,
