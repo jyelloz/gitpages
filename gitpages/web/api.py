@@ -40,7 +40,7 @@ PageInfo.to_url_tree = lambda self, tree_id: url_for(
 
 Page = namedtuple(
     'Page',
-    'info doc',
+    'info doc attachments',
 )
 
 Page.to_url = lambda self: self.info.to_url()
@@ -74,11 +74,12 @@ class GitPages(object):
         )
 
     @staticmethod
-    def _load_page(result, parts):
+    def _load_page(result, parts, attachments=None):
 
         return Page(
             info=GitPages._load_page_info(result),
             doc=parts,
+            attachments=attachments,
         )
 
     def by_path(self, path):
