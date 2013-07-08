@@ -4,7 +4,16 @@ import itertools
 import functools
 import posixpath
 
-PAGES_TREE, = 'page',
+PAGES_TREE, PAGE_RST = (
+    'page',
+    'page.rst',
+)
+
+ATTACHMENTS_TREE, ATTACHMENT_METADATA_RST, ATTACHMENT_DATA = (
+    'attachment',
+    'metadata.rst',
+    'data',
+)
 
 
 def iterable_nth(iterable, n, default=None):
@@ -19,7 +28,7 @@ def get_pages_tree(repository, ref='HEAD', commit=None):
     else:
         root = repository[commit.tree]
 
-    return repository[root['page'][1]]
+    return repository[root[PAGES_TREE][1]]
 
 
 def find_pages(repository, pages_tree, prefix=PAGES_TREE):
@@ -54,7 +63,7 @@ def find_page_rst_entry(page_tree):
 
     return next(
         i for i in page_tree.iteritems()
-        if i.path == 'page.rst'
+        if i.path == PAGE_RST
     )
 
 
@@ -69,11 +78,11 @@ def load_page_attachments(repository, page_tree):
 
         metadata_rst = next(
             i for i in attachment_tree.iteritems()
-            if i.path == 'metadata.rst'
+            if i.path == ATTACHMENT_METADATA_RST
         )
         data = next(
             i for i in attachment_tree.iteritems()
-            if i.path == 'data'
+            if i.path == ATTACHMENT_DATA
         )
 
         metadata = repository[metadata_rst.sha].data
@@ -82,7 +91,7 @@ def load_page_attachments(repository, page_tree):
         return metadata, data_callable
 
     attachments = next(
-        (i for i in page_tree.iteritems() if i.path == 'attachment'), None
+        (i for i in page_tree.iteritems() if i.path == ATTACHMENTS_TREE), None
     )
 
     if attachments is None:
