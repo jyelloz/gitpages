@@ -84,11 +84,12 @@ def load_page_attachments(repository, page_tree):
             i for i in attachment_tree.iteritems()
             if i.path == ATTACHMENT_DATA
         )
+        blob_id = data.sha
 
         metadata = repository[metadata_rst.sha].data
-        data_callable = functools.partial(getattr, repository, data.sha)
+        data_callable = functools.partial(getattr, repository, blob_id)
 
-        return metadata, data_callable
+        return blob_id, metadata, data_callable
 
     attachments = next(
         (i for i in page_tree.iteritems() if i.path == ATTACHMENTS_TREE), None
