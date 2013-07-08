@@ -72,6 +72,8 @@ def build_hybrid_index(index, repo, ref='HEAD'):
 
     def write_revision(writer, commit, path):
 
+        from posixpath import dirname
+
         tree_id = commit.tree
         tree = repo[tree_id]
         mode, blob_id = tree.lookup_path(repo.get_object, path)
@@ -94,6 +96,16 @@ def build_hybrid_index(index, repo, ref='HEAD'):
         date = parse_date(docinfo['date'])
         status = docinfo['status']
 
+        page_tree_path = dirname(path)
+
+        page_tree_mode, page_tree_id = tree.lookup_path(
+            repo.get_object,
+            page_tree_path,
+        )
+
+        page_tree = repo[page_tree_id]
+        attachments = git_storage.load_page_attachments(repo, page_tree)
+
         writer.add_document(
             kind=u'revision',
             commit_id=unicode(commit.id),
@@ -108,6 +120,37 @@ def build_hybrid_index(index, repo, ref='HEAD'):
             title=unicode(title),
             date=date,
         )
+
+        with writer.group():
+
+            for blob_id, metadata, data_callable in attachments:
+                from re import match
+
+                doctree = read_page_rst(metadata)
+                docinfo = get_docinfo_as_dict(doctree)
+
+                content_disposition = docinfo.get('content-disposition', '')
+                filename_matcher = match(
+                    r'^.*\s*filename=([^;]*);?.*',
+                    content_disposition,
+                )
+                content_length = int(docinfo.get('content-length', '-1'), 10)
+                content_type = docinfo.get(
+                    'content-type', 'application/octet-stream'
+                )
+
+                filename = (
+                    filename_matcher.group(1) if filename_matcher
+                    else (blob_id + '.bin')
+                )
+
+                writer.add_document(
+                    kind=u'revision-attachment',
+                    filename=unicode(filename),
+                    content_type=unicode(content_type),
+                    content_length=content_length,
+                    blob_id=unicode(blob_id),
+                )
 
     head_pages_tree = git_storage.get_pages_tree(repo, ref)
 
