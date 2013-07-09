@@ -128,9 +128,9 @@ def write_revision_attachment(writer, attachment):
 
 def _write_attachment(writer, attachment, kind):
 
-    blob_id, metadata, data_callable = attachment
+    blob_id, metadata_blob_id, data_callable, metadata_callable = attachment
 
-    doctree = read_page_rst(metadata)
+    doctree = read_page_rst(metadata_callable().data)
     docinfo = get_docinfo_as_dict(doctree)
 
     content_disposition = docinfo.get(
