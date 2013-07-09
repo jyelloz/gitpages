@@ -149,8 +149,8 @@ def _write_attachment(writer, attachment, kind):
     writer.add_document(
         kind=kind,
         attachment_content_type=unicode(content_type),
-        attachment_content_length=int(content_length, -1),
-        attachment_content_disposition=content_disposition,
+        attachment_content_length=int(content_length, 10),
+        attachment_content_disposition=unicode(content_disposition),
         blob_id=unicode(blob_id),
     )
 
