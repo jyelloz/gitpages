@@ -24,6 +24,9 @@ class DateRevisionHybrid(SchemaClass):
     commit_id = ID(stored=True)
     tree_id = ID(stored=True)
 
-    filename = ID(stored=True)
-    content_length = NUMERIC(stored=True)
-    content_type = ID(stored=True)
+    attachment_id = ID(stored=True)
+    attachment_data_blob_id = ID(stored=True)
+    attachment_metadata_blob_id = ID(stored=True)
+    attachment_content_type = ID(stored=True)
+    attachment_content_disposition = ID(stored=True)
+    attachment_content_length = NUMERIC(stored=True)
