@@ -61,6 +61,10 @@ def write_page(repo, writer, path, page, attachments):
         path=unicode(path),
     )
 
+    with writer.group():
+        for attachment in attachments:
+            write_page_attachment(writer, attachment)
+
 
 def write_revision(repo, writer, commit, path):
 
@@ -128,7 +132,11 @@ def write_revision_attachment(writer, attachment):
 
 def _write_attachment(writer, attachment, kind):
 
-    blob_id, metadata_blob_id, data_callable, metadata_callable = attachment
+    (
+        attachment_tree_id,
+        data_blob_id, metadata_blob_id,
+        data_callable, metadata_callable,
+    ) = attachment
 
     doctree = read_page_rst(metadata_callable().data)
     docinfo = get_docinfo_as_dict(doctree)
@@ -151,7 +159,10 @@ def _write_attachment(writer, attachment, kind):
         attachment_content_type=unicode(content_type),
         attachment_content_length=int(content_length, 10),
         attachment_content_disposition=unicode(content_disposition),
-        blob_id=unicode(blob_id),
+        attachment_metadata_blob_id=unicode(metadata_blob_id),
+        attachment_data_blob_id=unicode(data_blob_id),
+        tree_id=unicode(attachment_tree_id),
+        blob_id=unicode(data_blob_id),
     )
 
 
