@@ -8,7 +8,7 @@ from collections import namedtuple
 from flask import url_for
 from whoosh.query import Term, DateRange, Or, NestedChildren
 
-from .exceptions import PageNotFound
+from .exceptions import PageNotFound, AttachmentNotFound
 from ..util import cached
 
 
@@ -217,6 +217,10 @@ class GitPages(object):
             pagenum=1,
             pagelen=1,
         )
+
+        if results.is_empty():
+            _log.debug('results is empty')
+            raise AttachmentNotFound(attachment_tree_id)
 
         result = next(iter(results))
 

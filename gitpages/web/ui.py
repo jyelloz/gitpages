@@ -12,7 +12,7 @@ from flask import (
 from werkzeug.exceptions import NotFound
 from werkzeug.contrib.atom import AtomFeed
 
-from .exceptions import PageNotFound
+from .exceptions import PageNotFound, AttachmentNotFound
 from .schema import DateRevisionHybrid
 from .api import GitPages
 from ..indexer import get_index
@@ -288,18 +288,22 @@ def date_range_index(earliest, latest, ref, page_number):
 
 def attachment(tree_id):
 
-    attachment = g.gitpages.attachment(tree_id)
-    metadata = attachment.metadata
+    try:
+        attachment = g.gitpages.attachment(tree_id)
+        metadata = attachment.metadata
 
-    return (
-        attachment.data().data,
-        200,
-        {
-            'Content-Type': metadata.content_type,
-            'Content-Length': metadata.content_length,
-            'Content-Disposition': metadata.content_disposition,
-        },
-    )
+        return (
+            attachment.data().data,
+            200,
+            {
+                'Content-Type': metadata.content_type,
+                'Content-Length': metadata.content_length,
+                'Content-Disposition': metadata.content_disposition,
+            },
+        )
+
+    except AttachmentNotFound:
+        raise NotFound()
 
 
 def atom_feed():
