@@ -199,6 +199,45 @@ class GitPages(object):
 
         return results
 
+    def attachment(self, attachment_tree_id):
+
+        # FIXME: make it impossible to load attachments whose latest commit's
+        # page is not publicly visible
+
+        q = (
+            (
+                Term('kind', u'page-attachment')
+                | Term('kind', u'revision-attachment')
+            )
+            & Term('tree_id', unicode(attachment_tree_id))
+        )
+
+        results = self._searcher.search_page(
+            q,
+            pagenum=1,
+            pagelen=1,
+        )
+
+        result = next(iter(results))
+
+        data_blob_id = result['attachment_data_blob_id']
+
+        metadata = PageAttachmentMetadata(
+            attachment_id=result['tree_id'],
+            content_type=result['attachment_content_type'],
+            content_disposition=result['attachment_content_disposition'],
+            content_length=result['attachment_content_length'],
+        )
+        attachment = PageAttachment(
+            metadata=metadata,
+            data=partial(
+                self._repo.__getitem__,
+                data_blob_id,
+            ),
+        )
+
+        return attachment
+
     def older_pages(
         self,
         page,
