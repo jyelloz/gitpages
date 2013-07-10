@@ -96,7 +96,7 @@ def load_page_attachments(repository, page_tree):
             metadata_blob_id,
         )
 
-        return data_blob_id, metadata_blob_id, data_callable, metadata_callable
+        return attachment_tree.id, data_blob_id, metadata_blob_id, data_callable, metadata_callable
 
     attachments = next(
         (i for i in page_tree.iteritems() if i.path == ATTACHMENTS_TREE), None
