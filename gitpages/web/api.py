@@ -52,7 +52,7 @@ PageAttachmentMetadata = namedtuple(
 )
 
 PageAttachmentMetadata.to_url = lambda self: url_for(
-    '.page_attachment_view',
+    '.attachment',
     attachment_id=self.attachment_id,
 )
 

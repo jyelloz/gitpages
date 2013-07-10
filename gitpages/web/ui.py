@@ -128,6 +128,17 @@ def create_blueprint():
         },
     )
 
+    gitpages_web_ui.add_url_rule(
+        '/' + '/'.join(
+            [
+                'attachment',
+                '<git_ref:tree_id>',
+            ]
+        ),
+        'attachment',
+        attachment,
+    )
+
     gitpages_web_ui.before_app_first_request(setup_gitpages_application)
     gitpages_web_ui.before_request(setup_gitpages)
     gitpages_web_ui.teardown_request(teardown_gitpages)
@@ -272,6 +283,22 @@ def date_range_index(earliest, latest, ref, page_number):
         'index.html',
         index=results,
         results_page=results_page,
+    )
+
+
+def attachment(tree_id):
+
+    attachment = g.gitpages.attachment(tree_id)
+    metadata = attachment.metadata
+
+    return (
+        attachment.data().data,
+        200,
+        {
+            'Content-Type': metadata.content_type,
+            'Content-Length': metadata.content_length,
+            'Content-Disposition': metadata.content_disposition,
+        },
     )
 
 
