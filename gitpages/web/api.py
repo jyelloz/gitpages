@@ -40,11 +40,28 @@ PageInfo.to_url_tree = lambda self, tree_id: url_for(
 
 Page = namedtuple(
     'Page',
-    'info doc attachments',
+    'info doc',
 )
 
 Page.to_url = lambda self: self.info.to_url()
 Page.to_url_tree = lambda self, tree_id: self.info.to_url_tree(tree_id)
+
+PageAttachmentMetadata = namedtuple(
+    'PageAttachmentMetadata',
+    'attachment_id content_type content_disposition content_length',
+)
+
+PageAttachmentMetadata.to_url = lambda self: url_for(
+    '.page_attachment_view',
+    attachment_id=self.attachment_id,
+)
+
+PageAttachment = namedtuple(
+    'PageAttachment',
+    'metadata data',
+)
+
+PageAttachment.to_url = lambda self: self.metadata.to_url()
 
 
 def statuses_query(statuses):
@@ -74,12 +91,11 @@ class GitPages(object):
         )
 
     @staticmethod
-    def _load_page(result, parts, attachments=None):
+    def _load_page(result, parts):
 
         return Page(
             info=GitPages._load_page_info(result),
             doc=parts,
-            attachments=attachments,
         )
 
     def by_path(self, path):
@@ -96,7 +112,10 @@ class GitPages(object):
 
         parts = partial(render_page_content, blob)
 
-        return GitPages._load_page(page_result, parts)
+        return GitPages._load_page(
+            page_result,
+            parts,
+        )
 
     def page(self, date, slug, tree_id=None, statuses=_default_statuses):
 
@@ -147,7 +166,10 @@ class GitPages(object):
 
         parts = partial(render_page_content, blob)
 
-        return GitPages._load_page(page_result, parts)
+        return GitPages._load_page(
+            page_result,
+            parts,
+        )
 
     def history(
         self,
