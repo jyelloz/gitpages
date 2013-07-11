@@ -220,7 +220,13 @@ def page_archive_view(year, month, day, slug, tree_id):
 
         date = g.timezone.localize(datetime(year, month, day))
         page = g.gitpages.page(date, slug, tree_id, g.allowed_statuses)
-        attachments = g.gitpages.attachments(date, slug, tree_id)
+        attachments = g.gitpages.attachments(
+            date,
+            slug,
+            tree_id,
+            g.allowed_statuses,
+        )
+
         return page_view(page, attachments)
 
     except PageNotFound:
@@ -347,8 +353,23 @@ def page_to_key(page):
     return page.info.blob_id
 
 
-def page_by_path(path):
-    return page_view(g.gitpages.by_path(path))
+def page_by_path(path, statuses=None, template=None):
+
+    try:
+
+        page = g.gitpages.by_path(path)
+        info = page.info
+        attachments = g.gitpages.attachments(
+            date=info.date,
+            slug=info.slug,
+            tree_id=info.ref,
+            statuses=statuses,
+        )
+        return page_view(page, attachments, template)
+
+    except (PageNotFound, AttachmentNotFound):
+
+        raise NotFound()
 
 
 def page_view(page, attachments=[], template=None):
