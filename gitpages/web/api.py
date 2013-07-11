@@ -273,7 +273,7 @@ class GitPages(object):
         latest = earliest + GitPages._max_timedelta
 
         statuses_clause = (
-            statuses_query(statuses) if len(statuses)
+            statuses_query(statuses) if statuses is not None and len(statuses)
             else Every()
         )
 
