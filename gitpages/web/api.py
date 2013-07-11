@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import re
 from datetime import datetime, timedelta
 from functools import partial
 from collections import namedtuple
@@ -53,8 +54,30 @@ PageAttachmentMetadata = namedtuple(
 
 PageAttachmentMetadata.to_url = lambda self: url_for(
     '.attachment',
-    attachment_id=self.attachment_id,
+    tree_id=self.attachment_id,
 )
+
+
+_content_disposition_expression = re.compile(
+    r'^.*;\s*filename=(.+?)(:?;\s*.*)*$'
+)
+
+
+def _page_attachment_filename(self):
+
+    try:
+
+        filename = _content_disposition_expression.match(
+            self.content_disposition
+        ).group(1)
+
+        return filename
+
+    except:
+        raise
+        return self.attachment_id + '.bin'
+
+PageAttachmentMetadata.filename = _page_attachment_filename
 
 PageAttachment = namedtuple(
     'PageAttachment',
@@ -62,6 +85,7 @@ PageAttachment = namedtuple(
 )
 
 PageAttachment.to_url = lambda self: self.metadata.to_url()
+PageAttachment.filename = lambda self: self.metadata.filename()
 
 
 def statuses_query(statuses):
@@ -237,6 +261,77 @@ class GitPages(object):
         )
 
         return attachment
+
+    def attachments(
+        self,
+        date,
+        slug,
+        tree_id=None,
+        statuses=_default_statuses
+    ):
+
+        earliest = datetime(date.year, date.month, date.day)
+        latest = earliest + GitPages._max_timedelta
+
+        statuses_clause = statuses_query(statuses)
+
+        page_kind, attachment_kind = (
+            (u'page', u'page-attachment') if tree_id is None
+            else (u'revision', u'revision-attachment')
+        )
+
+        pq = Term('kind', page_kind)
+        cq = (
+            Term('slug', unicode(slug)) &
+            statuses_clause &
+            DateRange(
+                'date',
+                start=earliest,
+                end=latest,
+                startexcl=False,
+                endexcl=True,
+            )
+        )
+
+        _log.debug(
+            'page_kind = %r, attachment_kind = %r',
+            page_kind,
+            attachment_kind
+        )
+        _log.debug('pq = %r', pq)
+        _log.debug('cq = %r', cq)
+
+        q = NestedChildren(pq, cq)
+
+        results = self._searcher.search(
+            q,
+            filter=Term('kind', attachment_kind),
+        )
+
+        if results.is_empty():
+            _log.debug("no attachments")
+            return []
+
+        def load_attachment(result):
+
+            metadata = PageAttachmentMetadata(
+                attachment_id=result['tree_id'],
+                content_type=result['attachment_content_type'],
+                content_disposition=result['attachment_content_disposition'],
+                content_length=result['attachment_content_length'],
+            )
+
+            data = partial(
+                self._repo.__getitem__,
+                result['blob_id'],
+            )
+
+            return PageAttachment(
+                metadata=metadata,
+                data=data,
+            )
+
+        return (load_attachment(r) for r in results)
 
     def older_pages(
         self,

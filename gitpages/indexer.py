@@ -61,9 +61,8 @@ def write_page(repo, writer, path, page, attachments):
         path=unicode(path),
     )
 
-    with writer.group():
-        for attachment in attachments:
-            write_page_attachment(writer, attachment)
+    for attachment in attachments:
+        write_page_attachment(writer, attachment)
 
 
 def write_revision(repo, writer, commit, path):
@@ -102,22 +101,23 @@ def write_revision(repo, writer, commit, path):
     page_tree = repo[page_tree_id]
     attachments = git_storage.load_page_attachments(repo, page_tree)
 
-    writer.add_document(
-        kind=u'revision',
-        commit_id=unicode(commit.id),
-        tree_id=unicode(tree_id),
-        blob_id=unicode(blob_id),
-        author=unicode(commit.author),
-        committer=unicode(commit.committer),
-        commit_time=commit_time,
-        author_time=author_time,
-        message=unicode(commit.message),
-        status=unicode(status),
-        title=unicode(title),
-        date=date,
-    )
-
     with writer.group():
+
+        writer.add_document(
+            kind=u'revision',
+            commit_id=unicode(commit.id),
+            tree_id=unicode(tree_id),
+            blob_id=unicode(blob_id),
+            author=unicode(commit.author),
+            committer=unicode(commit.committer),
+            commit_time=commit_time,
+            author_time=author_time,
+            message=unicode(commit.message),
+            status=unicode(status),
+            title=unicode(title),
+            date=date,
+        )
+
         for attachment in attachments:
             write_revision_attachment(writer, attachment)
 
