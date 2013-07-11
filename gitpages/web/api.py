@@ -74,7 +74,6 @@ def _page_attachment_filename(self):
         return filename
 
     except:
-        raise
         return self.attachment_id + '.bin'
 
 PageAttachmentMetadata.filename = _page_attachment_filename
