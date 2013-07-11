@@ -212,11 +212,7 @@ class GitPages(object):
             & Term('tree_id', unicode(attachment_tree_id))
         )
 
-        results = self._searcher.search_page(
-            q,
-            pagenum=1,
-            pagelen=1,
-        )
+        results = self._searcher.search(q)
 
         if results.is_empty():
             _log.debug('results is empty')
