@@ -7,7 +7,7 @@ from functools import partial
 from collections import namedtuple
 
 from flask import url_for
-from whoosh.query import Term, DateRange, Or, NestedChildren
+from whoosh.query import Term, DateRange, And, Or, NestedChildren, Every
 
 from .exceptions import PageNotFound, AttachmentNotFound
 from ..util import cached
@@ -273,7 +273,10 @@ class GitPages(object):
         earliest = datetime(date.year, date.month, date.day)
         latest = earliest + GitPages._max_timedelta
 
-        statuses_clause = statuses_query(statuses)
+        statuses_clause = (
+            statuses_query(statuses) if len(statuses)
+            else Every()
+        )
 
         page_kind, attachment_kind = (
             (u'page', u'page-attachment') if tree_id is None
@@ -281,17 +284,17 @@ class GitPages(object):
         )
 
         pq = Term('kind', page_kind)
-        cq = (
-            Term('slug', unicode(slug)) &
-            statuses_clause &
+        cq = And([
+            Term('slug', unicode(slug)),
             DateRange(
                 'date',
                 start=earliest,
                 end=latest,
                 startexcl=False,
                 endexcl=True,
-            )
-        )
+            ),
+            statuses_clause,
+        ])
 
         _log.debug(
             'page_kind = %r, attachment_kind = %r',
