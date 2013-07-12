@@ -213,7 +213,10 @@ class GitPages(object):
 
         results = self._searcher.search_page(
             q,
-            filter=statuses_clause,
+            filter=And([
+                Term('kind', u'revision'),
+                statuses_clause,
+            ]),
             pagenum=page_number,
             pagelen=page_length,
             sortedby='commit_time',
