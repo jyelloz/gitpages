@@ -45,10 +45,10 @@
     {% endif %}
 
     <li>
-      <a href="{{ page.to_url_tree(change.tree_id)|safe }}">
-        {{ change.author_time }}: {{ change.tree_id }}
+      <a href="{{ page.to_url_tree(change.revision_tree_id)|safe }}">
+        {{ change.revision_author_time }}: {{ change.revision_tree_id }}
       </a>
-      <pre>{{ change.message }}</pre>
+      <pre>{{ change.revision_message }}</pre>
     </li>
 
     {% if loop.last %}

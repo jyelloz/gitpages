@@ -357,14 +357,8 @@ def page_by_path(path, statuses=None, template=None):
 
     try:
 
-        page = g.gitpages.by_path(path)
-        info = page.info
-        attachments = g.gitpages.attachments(
-            date=info.date,
-            slug=info.slug,
-            tree_id=info.ref,
-            statuses=statuses,
-        )
+        page = g.gitpages.page_by_path(path)
+        attachments = g.gitpages.attachments_by_path(path)
         return page_view(page, attachments, template)
 
     except (PageNotFound, AttachmentNotFound):

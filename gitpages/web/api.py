@@ -87,8 +87,9 @@ PageAttachment.to_url = lambda self: self.metadata.to_url()
 PageAttachment.filename = lambda self: self.metadata.filename()
 
 
-def statuses_query(statuses):
-    return Or([Term('status', s) for s in statuses])
+def statuses_query(status_field_prefix, statuses):
+    field_name = status_field_prefix + '_status'
+    return Or([Term(field_name, s) for s in statuses])
 
 
 class GitPages(object):
@@ -104,34 +105,75 @@ class GitPages(object):
     def _load_page_info(result):
 
         return PageInfo(
-            slug=result['slug'],
-            ref=None,  # result['ref_id'],
-            blob_id=result['blob_id'],
-            date=result['date'],
-            title=result['title'],
-            status=result['status'],
-            path=result['path'],
+            slug=result['page_slug'],
+            ref=None,  # result['page_ref_id'],
+            blob_id=result['page_blob_id'],
+            date=result['page_date'],
+            title=result['page_title'],
+            status=result['page_status'],
+            path=result['page_path'],
+        )
+
+    @staticmethod
+    def _load_page_revision_info(result):
+
+        return PageInfo(
+            slug=result['revision_slug'],
+            ref=None,
+            blob_id=result['revision_blob_id'],
+            date=result['revision_date'],
+            title=result['revision_title'],
+            status=result['revision_status'],
+            path=result['revision_path'],
         )
 
     @staticmethod
     def _load_page(result, parts):
-
         return Page(
             info=GitPages._load_page_info(result),
             doc=parts,
         )
 
-    def by_path(self, path):
-
-        results = self._searcher.search_page(
-            Term('kind', u'page') & Term('path', path),
-            pagenum=1,
-            pagelen=1,
+    @staticmethod
+    def _load_page_revision(result, parts):
+        return Page(
+            info=GitPages._load_page_revision_info(result),
+            doc=parts,
         )
+
+    @staticmethod
+    def _load_attachment(repo, result):
+
+        metadata = PageAttachmentMetadata(
+            attachment_id=result['attachment_id'],
+            content_type=result['attachment_content_type'],
+            content_disposition=result['attachment_content_disposition'],
+            content_length=result['attachment_content_length'],
+        )
+
+        data = partial(
+            repo.__getitem__,
+            result['attachment_data_blob_id'],
+        )
+
+        return PageAttachment(
+            metadata=metadata,
+            data=data,
+        )
+
+    def page_by_path(self, path):
+
+        results = self._searcher.search(
+            Term('kind', u'page') & Term('page_path', path),
+            limit=1,
+        )
+
+        if results.is_empty():
+            raise PageNotFound(path)
 
         page_result = next(iter(results))
 
-        blob = self._repo[page_result['blob_id']]
+        blob = self._repo[page_result['page_blob_id']]
 
         parts = partial(render_page_content, blob)
 
@@ -145,14 +187,14 @@ class GitPages(object):
         earliest = datetime(date.year, date.month, date.day)
         latest = earliest + GitPages._max_timedelta
 
-        statuses_clause = statuses_query(statuses)
+        statuses_clause = statuses_query('page', statuses)
 
         query = (
             Term('kind', u'page') &
-            Term('slug', unicode(slug)) &
+            Term('page_slug', unicode(slug)) &
             statuses_clause &
             DateRange(
-                'date',
+                'page_date',
                 start=earliest,
                 end=latest,
                 startexcl=False,
@@ -169,28 +211,37 @@ class GitPages(object):
         page_result = next(iter(results))
 
         if tree_id is None:
-            blob_id = page_result['blob_id']
-        else:
 
-            pq = Term('kind', 'page')
-            cq = Term('path', page_result['path']) & statuses_clause
-            q = NestedChildren(pq, cq)
+            blob_id = page_result['page_blob_id']
+            blob = self._repo[blob_id]
 
-            tree_id_term = Term('tree_id', tree_id) & statuses_clause
+            parts = partial(render_page_content, blob)
 
-            historic_results = self._searcher.search(
-                q,
-                filter=tree_id_term,
+            return GitPages._load_page(
+                page_result,
+                parts,
             )
 
-            blob_id = next(iter(historic_results))['blob_id']
+        pq = Term('kind', 'page')
+        cq = Term('page_path', page_result['page_path']) & statuses_clause
 
+        historic_results = self._searcher.search(
+            NestedChildren(pq, cq),
+            filter=And([
+                Term('revision_tree_id', tree_id),
+                statuses_query('revision', statuses),
+            ]),
+        )
+
+        page_revision_result = next(iter(historic_results))
+
+        blob_id = page_revision_result['revision_blob_id']
         blob = self._repo[blob_id]
 
         parts = partial(render_page_content, blob)
 
-        return GitPages._load_page(
-            page_result,
+        return GitPages._load_page_revision(
+            page_revision_result,
             parts,
         )
 
@@ -204,28 +255,26 @@ class GitPages(object):
 
         path = page.info.path
 
-        statuses_clause = statuses_query(statuses)
+        statuses_clause = statuses_query('page', statuses)
+        revision_statuses_clause = statuses_query('revision', statuses)
 
-        pq = Term('kind', 'page')
-        cq = Term('path', path) & statuses_clause
+        pq = Term('kind', u'page')
+        cq = Term('page_path', path) & statuses_clause
 
         q = NestedChildren(pq, cq)
 
         results = self._searcher.search_page(
             q,
-            filter=And([
-                Term('kind', u'revision'),
-                statuses_clause,
-            ]),
+            filter=Term('kind', u'revision') & revision_statuses_clause,
             pagenum=page_number,
             pagelen=page_length,
-            sortedby='commit_time',
+            sortedby='revision_commit_time',
             reverse=True,
         )
 
         return results
 
-    def attachment(self, attachment_tree_id):
+    def attachment(self, attachment_id):
 
         # FIXME: make it impossible to load attachments whose latest commit's
         # page is not publicly visible
@@ -235,21 +284,21 @@ class GitPages(object):
                 Term('kind', u'page-attachment')
                 | Term('kind', u'revision-attachment')
             )
-            & Term('tree_id', unicode(attachment_tree_id))
+            & Term('attachment_id', unicode(attachment_id))
         )
 
         results = self._searcher.search(q)
 
         if results.is_empty():
             _log.debug('results is empty')
-            raise AttachmentNotFound(attachment_tree_id)
+            raise AttachmentNotFound(attachment_id)
 
         result = next(iter(results))
 
         data_blob_id = result['attachment_data_blob_id']
 
         metadata = PageAttachmentMetadata(
-            attachment_id=result['tree_id'],
+            attachment_id=result['attachment_id'],
             content_type=result['attachment_content_type'],
             content_disposition=result['attachment_content_disposition'],
             content_length=result['attachment_content_length'],
@@ -275,21 +324,22 @@ class GitPages(object):
         earliest = datetime(date.year, date.month, date.day)
         latest = earliest + GitPages._max_timedelta
 
-        statuses_clause = (
-            statuses_query(statuses) if statuses is not None and len(statuses)
-            else Every()
-        )
-
         page_kind, attachment_kind = (
             (u'page', u'page-attachment') if tree_id is None
             else (u'revision', u'revision-attachment')
         )
 
+        statuses_clause = (
+            statuses_query(page_kind, statuses)
+            if statuses is not None and len(statuses)
+            else Every()
+        )
+
         pq = Term('kind', page_kind)
         cq = And([
-            Term('slug', unicode(slug)),
+            Term(page_kind + '_slug', unicode(slug)),
             DateRange(
-                'date',
+                page_kind + '_date',
                 start=earliest,
                 end=latest,
                 startexcl=False,
@@ -298,13 +348,8 @@ class GitPages(object):
             statuses_clause,
         ])
 
-        _log.debug(
-            'page_kind = %r, attachment_kind = %r',
-            page_kind,
-            attachment_kind
-        )
-        _log.debug('pq = %r', pq)
-        _log.debug('cq = %r', cq)
+        if tree_id is not None:
+            cq = cq & Term(page_kind + '_tree_id', tree_id)
 
         q = NestedChildren(pq, cq)
 
@@ -314,29 +359,32 @@ class GitPages(object):
         )
 
         if results.is_empty():
-            _log.debug("no attachments")
             return []
 
-        def load_attachment(result):
+        return (
+            GitPages._load_attachment(self._repo, r)
+            for r in results
+        )
 
-            metadata = PageAttachmentMetadata(
-                attachment_id=result['tree_id'],
-                content_type=result['attachment_content_type'],
-                content_disposition=result['attachment_content_disposition'],
-                content_length=result['attachment_content_length'],
-            )
+    def attachments_by_path(self, path, tree_id=None):
 
-            data = partial(
-                self._repo.__getitem__,
-                result['blob_id'],
-            )
+        page_kind, attachment_kind = (
+            (u'page', u'page-attachment') if tree_id is None
+            else (u'revision', u'revision-attachment')
+        )
 
-            return PageAttachment(
-                metadata=metadata,
-                data=data,
-            )
+        pq = Term('kind', page_kind)
+        cq = Term(page_kind + '_path', path)
 
-        return (load_attachment(r) for r in results)
+        results = self._searcher.search(
+            NestedChildren(pq, cq),
+            filter=Term('kind', attachment_kind),
+        )
+
+        return (
+            GitPages._load_attachment(self._repo, r)
+            for r in results
+        )
 
     def older_pages(
         self,
@@ -351,9 +399,9 @@ class GitPages(object):
 
         query = (
             Term('kind', u'page') &
-            statuses_query(statuses) &
+            statuses_query('page', statuses) &
             DateRange(
-                'date',
+                'page_date',
                 start=None,
                 end=latest,
                 startexcl=False,
@@ -365,7 +413,7 @@ class GitPages(object):
             query,
             pagenum=page_number,
             pagelen=page_length,
-            sortedby='date',
+            sortedby='page_date',
             reverse=True,
         )
 
@@ -387,9 +435,9 @@ class GitPages(object):
 
         query = (
             Term('kind', u'page') &
-            statuses_query(statuses) &
+            statuses_query('page', statuses) &
             DateRange(
-                'date',
+                'page_date',
                 start=earliest,
                 end=None,
                 startexcl=True,
@@ -401,7 +449,7 @@ class GitPages(object):
             query,
             pagenum=page_number,
             pagelen=page_length,
-            sortedby='date',
+            sortedby='page_date',
             reverse=False,
         )
 
@@ -414,13 +462,13 @@ class GitPages(object):
         self, page_number, page_length, statuses=_default_statuses
     ):
 
-        query = Term('kind', u'page') & statuses_query(statuses)
+        query = Term('kind', u'page') & statuses_query('page', statuses)
 
         results = self._searcher.search_page(
             query,
             page_number,
             page_length,
-            sortedby='date',
+            sortedby='page_date',
             reverse=True,
         )
 
@@ -441,7 +489,7 @@ class GitPages(object):
         statuses=_default_statuses,
     ):
 
-        status_clause = statuses_query(statuses)
+        status_clause = statuses_query('page', statuses)
 
         if start_date is None or end_date is None:
 
@@ -450,7 +498,7 @@ class GitPages(object):
         else:
 
             query = status_clause & DateRange(
-                'date',
+                'page_date',
                 start=start_date,
                 end=end_date,
                 startexcl=bool(start_date_excl),
@@ -461,12 +509,12 @@ class GitPages(object):
             Term('kind', u'page') & query,
             pagenum=page_number,
             pagelen=page_length,
-            sortedby='date',
+            sortedby='page_date',
             reverse=True,
         )
 
         results_blobs = (
-            (r, self._repo[r['blob_id']])
+            (r, self._repo[r['page_blob_id']])
             for r in results
         )
 
