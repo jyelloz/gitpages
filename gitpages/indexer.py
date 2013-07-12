@@ -145,10 +145,7 @@ def _write_attachment(writer, attachment, kind):
         'content-disposition',
         'inline',
     )
-    content_length = docinfo.get(
-        'content-length',
-        '-1',
-    )
+    content_length = data_callable().raw_length()
     content_type = docinfo.get(
         'content-type',
         'application/octet-stream',
@@ -157,7 +154,7 @@ def _write_attachment(writer, attachment, kind):
     writer.add_document(
         kind=kind,
         attachment_content_type=unicode(content_type),
-        attachment_content_length=int(content_length, 10),
+        attachment_content_length=content_length,
         attachment_content_disposition=unicode(content_disposition),
         attachment_metadata_blob_id=unicode(metadata_blob_id),
         attachment_data_blob_id=unicode(data_blob_id),
