@@ -87,6 +87,7 @@ def write_revision(repo, writer, commit, path):
 
     doctree = read_page_rst(page_blob.data)
     title = get_title(doctree)
+    slug = slugify(title)
     docinfo = get_docinfo_as_dict(doctree)
     date = parse_date(docinfo['date'])
     status = docinfo['status']
@@ -105,6 +106,8 @@ def write_revision(repo, writer, commit, path):
 
         writer.add_document(
             kind=u'revision',
+            slug=unicode(slug),
+            path=unicode(path),
             commit_id=unicode(commit.id),
             tree_id=unicode(tree_id),
             blob_id=unicode(blob_id),
