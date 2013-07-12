@@ -53,12 +53,12 @@ def write_page(repo, writer, path, page, attachments):
 
     writer.add_document(
         kind=u'page',
-        date=date,
-        slug=slug,
-        title=unicode(title),
-        status=unicode(status),
-        blob_id=blob_id,
-        path=unicode(path),
+        page_date=date,
+        page_slug=slug,
+        page_title=unicode(title),
+        page_status=unicode(status),
+        page_path=unicode(path),
+        page_blob_id=blob_id,
     )
 
     for attachment in attachments:
@@ -106,19 +106,19 @@ def write_revision(repo, writer, commit, path):
 
         writer.add_document(
             kind=u'revision',
-            slug=unicode(slug),
-            path=unicode(path),
-            commit_id=unicode(commit.id),
-            tree_id=unicode(tree_id),
-            blob_id=unicode(blob_id),
-            author=unicode(commit.author),
-            committer=unicode(commit.committer),
-            author_time=author_time,
-            commit_time=commit_time,
-            message=unicode(commit.message),
-            status=unicode(status),
-            title=unicode(title),
-            date=date,
+            revision_date=date,
+            revision_slug=unicode(slug),
+            revision_title=unicode(title),
+            revision_status=unicode(status),
+            revision_path=unicode(path),
+            revision_blob_id=unicode(blob_id),
+            revision_commit_id=unicode(commit.id),
+            revision_tree_id=unicode(tree_id),
+            revision_author=unicode(commit.author),
+            revision_committer=unicode(commit.committer),
+            revision_author_time=author_time,
+            revision_commit_time=commit_time,
+            revision_message=unicode(commit.message),
         )
 
         for attachment in attachments:
@@ -161,8 +161,7 @@ def _write_attachment(writer, attachment, kind):
         attachment_content_disposition=unicode(content_disposition),
         attachment_metadata_blob_id=unicode(metadata_blob_id),
         attachment_data_blob_id=unicode(data_blob_id),
-        tree_id=unicode(attachment_tree_id),
-        blob_id=unicode(data_blob_id),
+        attachment_id=unicode(attachment_tree_id),
     )
 
 
