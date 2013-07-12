@@ -3,17 +3,15 @@
 
 class PageNotFound(Exception):
 
-    def __init__(self, date, slug, ref):
+    def __init__(self, *args):
 
         super(PageNotFound, self).__init__()
 
-        self.date = date
-        self.slug = slug
-        self.ref = ref
+        self.args = args
 
     def __unicode__(self):
 
-        return u'%r, %r, %r' % (self.date, self.slug, self.ref)
+        return u', '.join(repr(arg) for arg in self.args)
 
     def __str__(self):
 
