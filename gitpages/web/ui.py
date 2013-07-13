@@ -12,7 +12,7 @@ from flask import (
 from werkzeug.exceptions import NotFound
 from werkzeug.contrib.atom import AtomFeed
 
-from .exceptions import PageNotFound
+from .exceptions import PageNotFound, AttachmentNotFound
 from .schema import DateRevisionHybrid
 from .api import GitPages
 from ..indexer import get_index
@@ -128,6 +128,17 @@ def create_blueprint():
         },
     )
 
+    gitpages_web_ui.add_url_rule(
+        '/' + '/'.join(
+            [
+                'attachment',
+                '<git_ref:tree_id>',
+            ]
+        ),
+        'attachment',
+        attachment,
+    )
+
     gitpages_web_ui.before_app_first_request(setup_gitpages_application)
     gitpages_web_ui.before_request(setup_gitpages)
     gitpages_web_ui.teardown_request(teardown_gitpages)
@@ -209,7 +220,14 @@ def page_archive_view(year, month, day, slug, tree_id):
 
         date = g.timezone.localize(datetime(year, month, day))
         page = g.gitpages.page(date, slug, tree_id, g.allowed_statuses)
-        return page_view(page)
+        attachments = g.gitpages.attachments(
+            date,
+            slug,
+            tree_id,
+            g.allowed_statuses,
+        )
+
+        return page_view(page, attachments)
 
     except PageNotFound:
         raise NotFound()
@@ -275,6 +293,26 @@ def date_range_index(earliest, latest, ref, page_number):
     )
 
 
+def attachment(tree_id):
+
+    try:
+        attachment = g.gitpages.attachment(tree_id)
+        metadata = attachment.metadata
+
+        return (
+            attachment.data().data,
+            200,
+            {
+                'Content-Type': metadata.content_type,
+                'Content-Length': metadata.content_length,
+                'Content-Disposition': metadata.content_disposition,
+            },
+        )
+
+    except AttachmentNotFound:
+        raise NotFound()
+
+
 def atom_feed():
 
     config = current_app.config
@@ -315,11 +353,20 @@ def page_to_key(page):
     return page.info.blob_id
 
 
-def page_by_path(path):
-    return page_view(g.gitpages.by_path(path))
+def page_by_path(path, statuses=None, template=None):
+
+    try:
+
+        page = g.gitpages.page_by_path(path)
+        attachments = g.gitpages.attachments_by_path(path)
+        return page_view(page, attachments, template)
+
+    except (PageNotFound, AttachmentNotFound):
+
+        raise NotFound()
 
 
-def page_view(page):
+def page_view(page, attachments=[], template=None):
 
     doc = page.doc()
     older = g.gitpages.older_pages(
@@ -353,10 +400,11 @@ def page_view(page):
     title = doc['title']
 
     return render_template(
-        'page.html',
+        template or 'page.html',
         title=title,
         body=body,
         page=page,
+        attachments=attachments,
         page_prev=next(iter(older), None),
         page_next=next(iter(newer), None),
         page_history=history,

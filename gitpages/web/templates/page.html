@@ -19,6 +19,24 @@
     )
   }}
 
+  {% for attachment in attachments %}
+
+    {% if loop.first %}
+    <h3>Attachments:</h3>
+    <ul class="attachments">
+    {% endif %}
+
+      <li>
+        <a href="{{ attachment.to_url() }}">{{ attachment.filename() }}</a>
+        ({{ attachment.metadata.content_type }})
+      </li>
+
+    {% if loop.last %}
+    </ul>
+    {% endif %}
+
+  {% endfor %}
+
   {% for change in page_history: %}
 
     {% if loop.first %}
@@ -27,10 +45,10 @@
     {% endif %}
 
     <li>
-      <a href="{{ page.to_url_tree(change.tree_id)|safe }}">
-        {{ change.author_time }}: {{ change.tree_id }}
+      <a href="{{ page.to_url_tree(change.revision_tree_id)|safe }}">
+        {{ change.revision_author_time }}: {{ change.revision_tree_id }}
       </a>
-      <pre>{{ change.message }}</pre>
+      <pre>{{ change.revision_message }}</pre>
     </li>
 
     {% if loop.last %}
