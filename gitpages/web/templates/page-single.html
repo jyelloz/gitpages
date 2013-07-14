@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% import "page.macros.html" as page_macros %}
+
+{% block page_title -%}
+  {{ title|smartypants }} &mdash; {{ super() }}
+{%- endblock page_title %}
+
+
+{% block content -%}
+
+  {{
+    page_macros.page_content(
+      title,
+      body,
+      page_url or page.to_url(),
+      page.info.date,
+      'single-page',
+    )
+  }}
+
+  {% for attachment in attachments %}
+
+    {% if loop.first %}
+    <h3>Attachments:</h3>
+    <ul class="attachments">
+    {% endif %}
+
+      <li>
+        <a href="{{ attachment.to_url() }}">{{ attachment.filename() }}</a>
+        ({{ attachment.metadata.content_type }})
+      </li>
+
+    {% if loop.last %}
+    </ul>
+    {% endif %}
+
+  {% endfor %}
+
+  {% for change in page_history: %}
+
+    {% if loop.first %}
+    <h3>Revisions:</h3>
+    <ul>
+    {% endif %}
+
+    <li>
+      <a href="{{ page.to_url_tree(change.revision_tree_id)|safe }}">
+        {{ change.revision_author_time }}: {{ change.revision_tree_id }}
+      </a>
+      <pre>{{ change.revision_message }}</pre>
+    </li>
+
+    {% if loop.last %}
+    </ul>
+    {% endif %}
+
+  {% endfor %}
+
+{%- endblock content %}
+
+{% block sidebar %}
+  {% with page_infos = recent_pages %}
+    {% include "page.sidebar.html" ignore missing %}
+  {% endwith %}
+{% endblock sidebar %}
+
+{# vim: ft=jinja ts=2 sts=2 sw=2 et : #}
