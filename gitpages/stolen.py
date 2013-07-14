@@ -17,6 +17,11 @@ from flask import current_app
 _stripped_re = re.compile(r'[()]+')
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.;]+')
 
+"""
+taken from
+http://flask.pocoo.org/snippets/5/
+"""
+
 
 def slugify(text, delim=u'-'):
     """Generates an ASCII-only slug."""
