@@ -13,7 +13,7 @@
     page_macros.page_content(
       title,
       body,
-      page.to_url(),
+      page_url or page.to_url(),
       page.info.date,
       'single-page',
     )
