@@ -104,7 +104,7 @@ class GitPages(object):
 
         return PageInfo(
             slug=result['page_slug'],
-            ref=None,  # result['page_ref_id'],
+            ref=None,
             blob_id=result['page_blob_id'],
             date=result['page_date'],
             title=result['page_title'],
@@ -117,7 +117,7 @@ class GitPages(object):
 
         return PageInfo(
             slug=result['revision_slug'],
-            ref=None,
+            ref=result['revision_tree_id'],
             blob_id=result['revision_blob_id'],
             date=result['revision_date'],
             title=result['revision_title'],

@@ -353,20 +353,20 @@ def page_to_key(page):
     return page.info.blob_id
 
 
-def page_by_path(path, statuses=None, template=None):
+def page_by_path(path, statuses=None, template=None, context_overrides={}):
 
     try:
 
         page = g.gitpages.page_by_path(path)
         attachments = g.gitpages.attachments_by_path(path)
-        return page_view(page, attachments, template)
+        return page_view(page, attachments, template, context_overrides)
 
     except (PageNotFound, AttachmentNotFound):
 
         raise NotFound()
 
 
-def page_view(page, attachments=[], template=None):
+def page_view(page, attachments=[], template=None, context_overrides={}):
 
     doc = page.doc()
     older = g.gitpages.older_pages(
@@ -409,4 +409,5 @@ def page_view(page, attachments=[], template=None):
         page_next=next(iter(newer), None),
         page_history=history,
         recent_pages=recent_pages,
+        **context_overrides
     )

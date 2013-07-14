@@ -57,24 +57,6 @@
 
   {% endfor %}
 
-  <div class="navigation">
-
-    {% if page_prev %}
-      <a class="page-prev" href="{{ page_prev.to_url() }}">
-        &larr;
-        {{ page_prev.title|typogrify }}
-      </a>
-    {% endif %}
-
-    {% if page_next %}
-      <a class="page-next" href="{{ page_next.to_url() }}">
-        {{ page_next.title|typogrify }}
-        &rarr;
-      </a>
-    {% endif %}
-
-  </div>
-
 {%- endblock content %}
 
 {% block sidebar %}
