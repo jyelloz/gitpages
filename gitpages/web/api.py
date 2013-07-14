@@ -14,6 +14,9 @@ from ..util import cached
 
 
 _log = logging.getLogger(__name__)
+_content_disposition_expression = re.compile(
+    r'^.*;\s*filename=(.+?)(:?;\s*.*)*$'
+)
 
 
 PageInfo = namedtuple(
@@ -55,11 +58,6 @@ PageAttachmentMetadata = namedtuple(
 PageAttachmentMetadata.to_url = lambda self: url_for(
     '.attachment',
     tree_id=self.attachment_id,
-)
-
-
-_content_disposition_expression = re.compile(
-    r'^.*;\s*filename=(.+?)(:?;\s*.*)*$'
 )
 
 
