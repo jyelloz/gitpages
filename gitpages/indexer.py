@@ -170,8 +170,14 @@ def build_hybrid_index(index, repo, ref='HEAD'):
     head = repo.refs[ref]
 
     def get_revisions(path):
+
+        from posixpath import dirname
+
         return Walker(
-            store=repo.object_store, include=[head], paths=[path], follow=True
+            store=repo.object_store,
+            include=[head],
+            paths=[dirname(path)],
+            follow=True,
         )
 
     head_pages_tree = git_storage.get_pages_tree(repo, ref)
