@@ -7,7 +7,7 @@ from functools import partial
 from collections import namedtuple
 
 from flask import url_for
-from whoosh.query import Term, DateRange, And, Or, NestedChildren, Every, Not
+from whoosh.query import Term, DateRange, And, Or, NestedChildren, Every
 
 from .exceptions import PageNotFound, AttachmentNotFound
 from ..util import cached
@@ -233,13 +233,13 @@ class GitPages(object):
         pq = Term('kind', 'page')
         cq = Term('page_path', page_result['page_path']) & statuses_clause
 
-        historic_results = self._searcher.search(
+        q = And([
             NestedChildren(pq, cq),
-            filter=And([
-                Term('revision_tree_id', tree_id),
-                statuses_query('revision', statuses),
-            ]),
-        )
+            Term('revision_tree_id', tree_id),
+            statuses_query('revision', statuses),
+        ])
+
+        historic_results = self._searcher.search(q)
 
         page_revision_result = next(iter(historic_results))
 
@@ -270,16 +270,14 @@ class GitPages(object):
         pq = Term('kind', 'page')
         cq = Term('page_path', path) & statuses_clause
 
-        q = NestedChildren(pq, cq)
-
-        f = And([
+        q = And([
+            NestedChildren(pq, cq),
             Term('kind', 'revision'),
             revision_statuses_clause,
         ])
 
         results = self._searcher.search_page(
             q,
-            mask=Not(f),
             pagenum=page_number,
             pagelen=page_length,
             sortedby='revision_commit_time',
@@ -363,12 +361,12 @@ class GitPages(object):
         if tree_id is not None:
             cq = cq & Term(page_kind + '_tree_id', tree_id)
 
-        q = NestedChildren(pq, cq)
+        q = And([
+            NestedChildren(pq, cq),
+            Term('kind', attachment_kind),
+        ])
 
-        results = self._searcher.search(
-            q,
-            mask=Not(Term('kind', attachment_kind)),
-        )
+        results = self._searcher.search(q)
 
         if results.is_empty():
             return []
@@ -388,10 +386,12 @@ class GitPages(object):
         pq = Term('kind', page_kind)
         cq = Term(page_kind + '_path', path)
 
-        results = self._searcher.search(
+        q = And([
             NestedChildren(pq, cq),
-            mask=Not(Term('kind', attachment_kind)),
-        )
+            Term('kind', attachment_kind),
+        ])
+
+        results = self._searcher.search(q)
 
         return (
             GitPages._load_attachment(self._repo, r)
