@@ -2,6 +2,8 @@
 
 from unittest import TestCase
 
+from nose.tools import raises
+
 from dulwich.repo import MemoryRepo
 from dulwich.objects import Blob, Commit, Tree
 
@@ -10,6 +12,7 @@ from whoosh.filedb.filestore import RamStorage
 from gitpages.indexer import build_hybrid_index
 from gitpages.web.api import GitPages
 from gitpages.web.schema import DateRevisionHybrid
+from gitpages.web.exceptions import PageNotFound
 
 
 _SAMPLE_PAGE_RST = """\
@@ -89,10 +92,31 @@ class APITestCase(TestCase):
     def tearDown(self):
 
         searcher = getattr(self, 'searcher', None)
+        index = getattr(self, 'index', None)
+
         if searcher is not None:
             searcher.close()
 
-    def test_page_by_path(self):
+        if index is not None:
+            index.close()
+
+    def test_page_by_path_success(self):
 
         sample_page = self.api.page_by_path('page/sample-page/page.rst')
         self.assertTrue(sample_page)
+
+    @raises(PageNotFound)
+    def test_page_by_path_failure(self):
+
+        sample_page = self.api.page_by_path('page/non-existent-page/page.rst')
+        self.assertIsNotNone(sample_page)
+
+    def test_index(self):
+
+        pages, results = self.api.index(1, 'HEAD')
+
+        pages_list = list(pages)
+        page = pages_list[0]
+
+        self.assertEqual(len(pages_list), 1)
+        self.assertEqual(page.info.title, u'Sample Page')
