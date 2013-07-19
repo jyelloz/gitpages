@@ -1,4 +1,6 @@
 setuptools>=0.8
+nose
+coverage
 bpython
 docutils
 dulwich
