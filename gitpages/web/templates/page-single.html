@@ -25,25 +25,12 @@
     )
   }}
 
-  {% for change in page_history: %}
-
-    {% if loop.first %}
-    <h3>Revisions:</h3>
-    <ul>
-    {% endif %}
-
-    <li>
-      <a href="{{ page.to_url_tree(change.revision_tree_id)|safe }}">
-        {{ change.revision_author_time }}: {{ change.revision_tree_id }}
-      </a>
-      <pre>{{ change.revision_message }}</pre>
-    </li>
-
-    {% if loop.last %}
-    </ul>
-    {% endif %}
-
-  {% endfor %}
+  {{
+    page_macros.page_revisions_list(
+      page,
+      page_history,
+    )
+  }}
 
 {%- endblock content %}
 
