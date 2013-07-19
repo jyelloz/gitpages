@@ -5,9 +5,9 @@ This is all code that I did not write.
 '''
 
 import re
+from functools import wraps
 
 from unidecode import unidecode
-from functools import wraps
 
 from docutils.nodes import SkipNode
 
