@@ -19,24 +19,11 @@
     )
   }}
 
-  {% for attachment in attachments %}
-
-    {% if loop.first %}
-    <h3>Attachments:</h3>
-    <ul class="attachments">
-    {% endif %}
-
-      <li>
-        <a href="{{ attachment.to_url() }}">{{ attachment.filename() }}</a>
-        ({{ attachment.metadata.content_length|filesizeformat(binary=True)}};
-        {{ attachment.metadata.content_type }})
-      </li>
-
-    {% if loop.last %}
-    </ul>
-    {% endif %}
-
-  {% endfor %}
+  {{
+    page_macros.page_attachments_list(
+      attachments,
+    )
+  }}
 
   {% for change in page_history: %}
 
