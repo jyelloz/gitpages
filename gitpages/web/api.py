@@ -21,7 +21,7 @@ _content_disposition_expression = re.compile(
 
 PageInfo = namedtuple(
     'PageInfo',
-    'date slug ref title status blob_id path',
+    'date slug ref title status blob_id path revision_date revision_slug',
 )
 
 PageInfo.to_url = lambda self: url_for(
@@ -110,19 +110,23 @@ class GitPages(object):
             title=result['page_title'],
             status=result['page_status'],
             path=result['page_path'],
+            revision_slug=result['page_slug'],
+            revision_date=result['page_date'],
         )
 
     @staticmethod
-    def _load_page_revision_info(result):
+    def _load_page_revision_info(page_result, page_revision_result):
 
         return PageInfo(
-            slug=result['revision_slug'],
-            ref=result['revision_tree_id'],
-            blob_id=result['revision_blob_id'],
-            date=result['revision_date'],
-            title=result['revision_title'],
-            status=result['revision_status'],
-            path=result['revision_path'],
+            slug=page_result['page_slug'],
+            date=page_result['page_date'],
+            ref=page_revision_result['revision_tree_id'],
+            blob_id=page_revision_result['revision_blob_id'],
+            title=page_revision_result['revision_title'],
+            status=page_revision_result['revision_status'],
+            path=page_revision_result['revision_path'],
+            revision_slug=page_revision_result['revision_slug'],
+            revision_date=page_revision_result['revision_date'],
         )
 
     @staticmethod
@@ -133,9 +137,12 @@ class GitPages(object):
         )
 
     @staticmethod
-    def _load_page_revision(result, parts):
+    def _load_page_revision(page_result, page_revision_result, parts):
         return Page(
-            info=GitPages._load_page_revision_info(result),
+            info=GitPages._load_page_revision_info(
+                page_result,
+                page_revision_result,
+            ),
             doc=parts,
         )
 
@@ -239,6 +246,7 @@ class GitPages(object):
         parts = partial(render_page_content, blob)
 
         return GitPages._load_page_revision(
+            page_result,
             page_revision_result,
             parts,
         )

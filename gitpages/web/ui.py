@@ -220,10 +220,16 @@ def page_archive_view(year, month, day, slug, tree_id):
 
         date = g.timezone.localize(datetime(year, month, day))
         page = g.gitpages.page(date, slug, tree_id, g.allowed_statuses)
+
+        attachments_date, attachments_slug, attachments_ref = (
+            (date, slug, None) if tree_id is None
+            else (page.info.revision_date, page.info.revision_slug, tree_id)
+        )
+
         attachments = g.gitpages.attachments(
-            date,
-            slug,
-            tree_id,
+            attachments_date,
+            attachments_slug,
+            attachments_ref,
             g.allowed_statuses,
         )
 
