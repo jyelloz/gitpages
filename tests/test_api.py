@@ -12,7 +12,7 @@ from whoosh.filedb.filestore import RamStorage
 from gitpages.indexer import build_hybrid_index
 from gitpages.web.api import GitPages
 from gitpages.web.schema import DateRevisionHybrid
-from gitpages.web.exceptions import PageNotFound
+from gitpages.web.exceptions import PageNotFound, AttachmentNotFound
 
 
 _SAMPLE_PAGE_RST = """\
@@ -29,6 +29,20 @@ Sample Page
 This is a sample page.
 """
 
+_SAMPLE_PAGE_WITH_ATTACHMENTS_RST = """\
+Sample Page With Attachments
+============================
+
+:Author: Fake Fakesworthy
+:date: 2012-12-12 12:12:12-08:00
+:status: published
+
+:date created: 2012-12-12 12:12:12-08:00
+:date modified: 2012-12-12 12:12:12-08:00
+
+This is a sample page with some attachments.
+"""
+
 
 class APITestCase(TestCase):
 
@@ -41,15 +55,31 @@ class APITestCase(TestCase):
         repo = MemoryRepo()
         store = repo.object_store
 
-        sample_page_rst_blob = Blob.from_string(_SAMPLE_PAGE_RST)
+        sample_page_rst_blob, sample_page_with_attachments_rst_blob = (
+            Blob.from_string(_SAMPLE_PAGE_RST),
+            Blob.from_string(_SAMPLE_PAGE_WITH_ATTACHMENTS_RST),
+        )
+
         store.add_object(sample_page_rst_blob)
+        store.add_object(sample_page_with_attachments_rst_blob)
 
         sample_page_tree = Tree()
         sample_page_tree.add('page.rst', 0100644, sample_page_rst_blob.id)
         store.add_object(sample_page_tree)
 
+        sample_page_with_attachments_tree = Tree()
+        sample_page_with_attachments_tree.add(
+            'page.rst', 0100644, sample_page_with_attachments_rst_blob.id
+        )
+        store.add_object(sample_page_with_attachments_tree)
+
         pages_tree = Tree()
         pages_tree.add('sample-page', 0100755, sample_page_tree.id)
+        pages_tree.add(
+            'sample-page-with-attachments',
+            0100755,
+            sample_page_with_attachments_tree.id,
+        )
         store.add_object(pages_tree)
 
         root_tree = Tree()
@@ -100,23 +130,48 @@ class APITestCase(TestCase):
         if index is not None:
             index.close()
 
-    def test_page_by_path_success(self):
+    def test_page_by_path(self):
 
         sample_page = self.api.page_by_path('page/sample-page/page.rst')
         self.assertTrue(sample_page)
 
     @raises(PageNotFound)
-    def test_page_by_path_failure(self):
+    def test_page_by_path_not_found(self):
 
-        sample_page = self.api.page_by_path('page/non-existent-page/page.rst')
-        self.assertIsNotNone(sample_page)
+        self.api.page_by_path('page/non-existent-page/page.rst')
+
+    def test_attachments_by_path(self):
+
+        path = 'page/sample-page-with-attachments/page.rst'
+
+        attachments = list(self.api.attachments_by_path(path))
+
+        for attachment in attachments:
+            print attachment
+
+    def test_attachments_by_path_empty(self):
+
+        path = 'page/sample-page/page.rst'
+
+        self.api.page_by_path(path)
+        attachments = list(self.api.attachments_by_path(path))
+
+        self.assertEqual(len(attachments), 0)
+
+    @raises(AttachmentNotFound)
+    def test_attachment_not_found(self):
+
+        fake_tree_id = '1' * 40
+
+        self.api.attachment(fake_tree_id)
 
     def test_index(self):
 
         pages, results = self.api.index(1, 'HEAD')
 
         pages_list = list(pages)
-        page = pages_list[0]
+        page, page_with_attachments = pages_list
 
-        self.assertEqual(len(pages_list), 1)
-        self.assertEqual(page.info.title, u'Sample Page')
+        self.assertEqual(len(pages_list), 2)
+        self.assertEqual(page.info.title, u'Sample Page With Attachments')
+        self.assertEqual(page_with_attachments.info.title, u'Sample Page')
