@@ -387,9 +387,12 @@ class GitPages(object):
             filter=Term('kind', attachment_kind),
         )
 
+        # XXX: The extra external filtering is due to a bug in Whoosh<=2.5.1
+
         return (
             GitPages._load_attachment(self._repo, r)
             for r in results
+            if r['kind'] == attachment_kind
         )
 
     def older_pages(
