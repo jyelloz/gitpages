@@ -93,7 +93,7 @@ def statuses_query(status_field_prefix, statuses):
 class GitPages(object):
 
     _max_timedelta = timedelta(days=1)
-    _default_statuses = frozenset((u'published',))
+    _default_statuses = frozenset(('published',))
 
     def __init__(self, repo, searcher):
         self._repo = repo
@@ -169,7 +169,7 @@ class GitPages(object):
     def page_by_path(self, path):
 
         results = self._searcher.search(
-            Term('kind', u'page') & Term('page_path', path),
+            Term('kind', 'page') & Term('page_path', path),
             limit=1,
         )
 
@@ -195,8 +195,8 @@ class GitPages(object):
         statuses_clause = statuses_query('page', statuses)
 
         query = (
-            Term('kind', u'page') &
-            Term('page_slug', unicode(slug)) &
+            Term('kind', 'page') &
+            Term('page_slug', slug) &
             statuses_clause &
             DateRange(
                 'page_date',
@@ -264,14 +264,14 @@ class GitPages(object):
         statuses_clause = statuses_query('page', statuses)
         revision_statuses_clause = statuses_query('revision', statuses)
 
-        pq = Term('kind', u'page')
+        pq = Term('kind', 'page')
         cq = Term('page_path', path) & statuses_clause
 
         q = NestedChildren(pq, cq)
 
         results = self._searcher.search_page(
             q,
-            filter=Term('kind', u'revision') & revision_statuses_clause,
+            filter=Term('kind', 'revision') & revision_statuses_clause,
             pagenum=page_number,
             pagelen=page_length,
             sortedby='revision_commit_time',
@@ -329,8 +329,8 @@ class GitPages(object):
         latest = earliest + GitPages._max_timedelta
 
         page_kind, attachment_kind = (
-            (u'page', u'page-attachment') if tree_id is None
-            else (u'revision', u'revision-attachment')
+            ('page', 'page-attachment') if tree_id is None
+            else ('revision', 'revision-attachment')
         )
 
         statuses_clause = (
@@ -341,7 +341,7 @@ class GitPages(object):
 
         pq = Term('kind', page_kind)
         cq = And([
-            Term(page_kind + '_slug', unicode(slug)),
+            Term(page_kind + '_slug', slug),
             DateRange(
                 page_kind + '_date',
                 start=earliest,
@@ -373,8 +373,8 @@ class GitPages(object):
     def attachments_by_path(self, path, tree_id=None):
 
         page_kind, attachment_kind = (
-            (u'page', u'page-attachment') if tree_id is None
-            else (u'revision', u'revision-attachment')
+            ('page', 'page-attachment') if tree_id is None
+            else ('revision', 'revision-attachment')
         )
 
         pq = Term('kind', page_kind)
@@ -405,7 +405,7 @@ class GitPages(object):
         latest = page.info.date
 
         query = (
-            Term('kind', u'page') &
+            Term('kind', 'page') &
             statuses_query('page', statuses) &
             DateRange(
                 'page_date',
@@ -441,7 +441,7 @@ class GitPages(object):
         earliest = page.info.date
 
         query = (
-            Term('kind', u'page') &
+            Term('kind', 'page') &
             statuses_query('page', statuses) &
             DateRange(
                 'page_date',
@@ -469,7 +469,7 @@ class GitPages(object):
         self, page_number, page_length, statuses=_default_statuses
     ):
 
-        query = Term('kind', u'page') & statuses_query('page', statuses)
+        query = Term('kind', 'page') & statuses_query('page', statuses)
 
         results = self._searcher.search_page(
             query,
@@ -513,7 +513,7 @@ class GitPages(object):
             )
 
         results = self._searcher.search_page(
-            Term('kind', u'page') & query,
+            Term('kind', 'page') & query,
             pagenum=page_number,
             pagelen=page_length,
             sortedby='page_date',
