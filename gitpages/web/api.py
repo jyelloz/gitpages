@@ -285,13 +285,11 @@ class GitPages(object):
         # FIXME: make it impossible to load attachments whose latest commit's
         # page is not publicly visible
 
-        q = (
-            (
-                Term('kind', u'page-attachment')
-                | Term('kind', u'revision-attachment')
-            )
-            & Term('attachment_id', unicode(attachment_id))
-        )
+        q = And([
+            Term('kind', 'page-attachment')
+            | Term('kind', 'revision-attachment'),
+            Term('attachment_id', attachment_id),
+        ])
 
         results = self._searcher.search(q)
 
