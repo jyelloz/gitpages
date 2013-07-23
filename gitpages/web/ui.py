@@ -15,7 +15,6 @@ from werkzeug.contrib.atom import AtomFeed
 from .exceptions import PageNotFound, AttachmentNotFound
 from .schema import DateRevisionHybrid
 from .api import GitPages
-from ..indexer import get_index
 
 
 _log = logging.getLogger(__name__)
@@ -155,10 +154,8 @@ def setup_gitpages_application():
     repo = config['GITPAGES_REPOSITORY']
     ref = config['GITPAGES_DEFAULT_REF']
 
-    index = get_index(
-        config['GITPAGES_INDEX_PATH'],
-        'index',
-        DateRevisionHybrid(),
+    index = config['GITPAGES_INDEX'](
+        schema=DateRevisionHybrid()
     )
 
     current_app.repo = repo
@@ -169,6 +166,7 @@ def setup_gitpages_application():
 
 
 def setup_gitpages():
+
     g.timezone = current_app.timezone
     g.utcnow = datetime.utcnow()
     g.searcher = current_app.index.searcher()
