@@ -24,6 +24,9 @@ Sample Page
 :date modified: 2011-11-11 11:11:11-08:00
 
 This is a sample page.
+
+Here is some ``inline literal text``.
+
 """
 
 _SAMPLE_PAGE_WITH_ATTACHMENTS_RST = """\
