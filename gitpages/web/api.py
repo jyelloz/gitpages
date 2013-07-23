@@ -7,7 +7,7 @@ from functools import partial
 from collections import namedtuple
 
 from flask import url_for
-from whoosh.query import Term, DateRange, And, Or, NestedChildren, Every
+from whoosh.query import Term, DateRange, And, Or, NestedChildren, Every, Not
 
 from .exceptions import PageNotFound, AttachmentNotFound
 from ..util import cached
@@ -269,9 +269,14 @@ class GitPages(object):
 
         q = NestedChildren(pq, cq)
 
+        f = And([
+            Term('kind', 'revision'),
+            revision_statuses_clause,
+        ])
+
         results = self._searcher.search_page(
             q,
-            filter=Term('kind', 'revision') & revision_statuses_clause,
+            mask=Not(f),
             pagenum=page_number,
             pagelen=page_length,
             sortedby='revision_commit_time',
@@ -359,7 +364,7 @@ class GitPages(object):
 
         results = self._searcher.search(
             q,
-            filter=Term('kind', attachment_kind),
+            mask=Not(Term('kind', attachment_kind)),
         )
 
         if results.is_empty():
@@ -382,15 +387,12 @@ class GitPages(object):
 
         results = self._searcher.search(
             NestedChildren(pq, cq),
-            filter=Term('kind', attachment_kind),
+            mask=Not(Term('kind', attachment_kind)),
         )
-
-        # XXX: The extra external filtering is due to a bug in Whoosh<=2.5.1
 
         return (
             GitPages._load_attachment(self._repo, r)
             for r in results
-            if r['kind'] == attachment_kind
         )
 
     def older_pages(
