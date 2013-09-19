@@ -138,6 +138,17 @@ def create_blueprint():
         attachment,
     )
 
+    gitpages_web_ui.add_url_rule(
+        '/' + '/'.join(
+            [
+                'inline-attachment',
+                '<git_ref:tree_id>',
+            ]
+        ),
+        'inline_attachment',
+        inline_attachment,
+    )
+
     gitpages_web_ui.before_app_first_request(setup_gitpages_application)
     gitpages_web_ui.before_request(setup_gitpages)
     gitpages_web_ui.teardown_request(teardown_gitpages)
@@ -310,6 +321,28 @@ def attachment(tree_id):
                 'Content-Type': metadata.content_type,
                 'Content-Length': metadata.content_length,
                 'Content-Disposition': metadata.content_disposition,
+            },
+        )
+
+    except AttachmentNotFound:
+        raise NotFound()
+
+
+def inline_attachment(tree_id):
+
+    from ..util import inlineify
+
+    try:
+        attachment = g.gitpages.attachment(tree_id)
+        metadata = attachment.metadata
+
+        return (
+            attachment.data().data,
+            200,
+            {
+                'Content-Type': metadata.content_type,
+                'Content-Length': metadata.content_length,
+                'Content-Disposition': inlineify(metadata.content_disposition),
             },
         )
 

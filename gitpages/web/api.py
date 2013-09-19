@@ -55,8 +55,9 @@ PageAttachmentMetadata = namedtuple(
     'attachment_id content_type content_disposition content_length',
 )
 
-PageAttachmentMetadata.to_url = lambda self: url_for(
-    '.attachment',
+
+PageAttachmentMetadata.to_url = lambda self, attachment=True: url_for(
+    '.attachment' if attachment else '.inline_attachment',
     tree_id=self.attachment_id,
 )
 
@@ -81,7 +82,9 @@ PageAttachment = namedtuple(
     'metadata data',
 )
 
-PageAttachment.to_url = lambda self: self.metadata.to_url()
+PageAttachment.to_url = lambda self, attachment=True: self.metadata.to_url(
+    attachment
+)
 PageAttachment.filename = lambda self: self.metadata.filename()
 
 

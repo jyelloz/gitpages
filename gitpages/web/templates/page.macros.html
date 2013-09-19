@@ -28,7 +28,12 @@
     <li>
       <a href="{{ attachment.to_url() }}">{{ attachment.filename() }}</a>
       ({{ attachment.metadata.content_length|filesizeformat(binary=True)}};
-      {{ attachment.metadata.content_type }})
+      {% with content_type = attachment.metadata.content_type %}
+      {{ content_type }})
+      {% if 'image/' in content_type or 'text/' in content_type %}
+      <a href="{{ attachment.to_url(attachment=False) }}">view in browser</a>
+      {% endif %}
+      {% endwith %}
     </li>
 
   {% if loop.last %}
