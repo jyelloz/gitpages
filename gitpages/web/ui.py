@@ -136,17 +136,24 @@ def create_blueprint():
         ),
         'attachment',
         attachment,
+        defaults=dict(
+            inline=False,
+        ),
     )
 
     gitpages_web_ui.add_url_rule(
         '/' + '/'.join(
             [
-                'inline-attachment',
+                'attachment',
                 '<git_ref:tree_id>',
+                'inline',
             ]
         ),
         'inline_attachment',
-        inline_attachment,
+        attachment,
+        defaults=dict(
+            inline=True,
+        ),
     )
 
     gitpages_web_ui.before_app_first_request(setup_gitpages_application)
@@ -308,27 +315,7 @@ def date_range_index(earliest, latest, ref, page_number):
     )
 
 
-def attachment(tree_id):
-
-    try:
-        attachment = g.gitpages.attachment(tree_id)
-        metadata = attachment.metadata
-
-        return (
-            attachment.data().data,
-            200,
-            {
-                'Content-Type': metadata.content_type,
-                'Content-Length': metadata.content_length,
-                'Content-Disposition': metadata.content_disposition,
-            },
-        )
-
-    except AttachmentNotFound:
-        raise NotFound()
-
-
-def inline_attachment(tree_id):
+def attachment(tree_id, inline):
 
     from ..util import inlineify
 
@@ -336,13 +323,18 @@ def inline_attachment(tree_id):
         attachment = g.gitpages.attachment(tree_id)
         metadata = attachment.metadata
 
+        content_disposition = (
+            inlineify(metadata.content_disposition) if inline
+            else metadata.content_disposition
+        )
+
         return (
             attachment.data().data,
             200,
             {
                 'Content-Type': metadata.content_type,
                 'Content-Length': metadata.content_length,
-                'Content-Disposition': inlineify(metadata.content_disposition),
+                'Content-Disposition': content_disposition,
             },
         )
 
