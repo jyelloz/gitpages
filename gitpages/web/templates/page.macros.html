@@ -1,4 +1,4 @@
-{% macro page_content(title, body, url, date, article_class) %} 
+{% macro page_content(title, body, url, date, article_class) %}
 <article {% if article_class %}class="{{ article_class }}"{% endif %}>
 
   <header>
@@ -6,6 +6,10 @@
   </header>
 
   {{ body|safe }}
+
+  {% if caller %}
+    {{ caller() }}
+  {% endif %}
 
   <footer>
     <p class="info">
