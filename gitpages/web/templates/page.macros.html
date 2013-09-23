@@ -30,14 +30,18 @@
   {% endif %}
 
     <li>
-      <a href="{{ attachment.to_url() }}">{{ attachment.filename() }}</a>
-      ({{ attachment.metadata.content_length|filesizeformat(binary=True)}};
-      {% with content_type = attachment.metadata.content_type %}
-      {{ content_type }})
-      {% if 'image/' in content_type or 'text/' in content_type %}
-      <a href="{{ attachment.to_url(attachment=False) }}">view in browser</a>
-      {% endif %}
-      {% endwith %}
+
+      <b>{{ attachment.filename() }}</b>
+
+      {%- with content_type = attachment.metadata.content_type %}
+
+        ({{ attachment.metadata.content_length|filesizeformat(binary=True)}};
+        {{ content_type }};
+        <a href="{{ attachment.to_url(attachment=False) }}">view</a>
+        |
+        <a href="{{ attachment.to_url() }}">download</a>)
+
+      {% endwith -%}
     </li>
 
   {% if loop.last %}
