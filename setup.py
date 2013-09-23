@@ -30,6 +30,6 @@ setup(
         'pytz>=2013b',
         'typogrify',
         'Unidecode',
-        'Whoosh',
+        'Whoosh>=2.5.4',
     ],
 )
