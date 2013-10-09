@@ -1,11 +1,20 @@
 {% macro page_content(title, body, url, date, article_class) %}
-<article {% if article_class %}class="{{ article_class }}"{% endif %}>
+<article {% if article_class %}class="{{ article_class }}"{% endif %}
+  itemscope
+  itemtype="http://schema.org/BlogPosting"
+  >
 
   <header>
-    <h2><a href="{{ url }}">{{ title|typogrify }}</a></h2>
+    <h2 itemprop="headline">
+      <a itemprop="url" content="{{ url }}" href="{{ url }}">
+        {{ title|typogrify }}
+      </a>
+    </h2>
   </header>
 
+  <div itemprop="articlebody">
   {{ body|safe }}
+  </div>
 
   {% if caller %}
     {{ caller() }}
@@ -13,7 +22,10 @@
 
   <footer>
     <p class="info">
-      Posted on <b>{{ date.strftime('%a %d %b %Y') }}</b>
+      Posted on
+      <time itemprop="datepublished" content="{{ date.date().isoformat() }}">
+        <b>{{ date.strftime(' %a %d %b %Y') }}</b>
+      </time>
     </p>
   </footer>
 
