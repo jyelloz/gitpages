@@ -6,7 +6,7 @@ docutils
 dulwich
 Flask
 Flask-Failsafe
-Flask-Script
+Flask-Script==0.5.3
 Pygments
 python-dateutil
 pytz>=2013b
