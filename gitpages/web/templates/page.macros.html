@@ -1,4 +1,4 @@
-{% macro page_content(title, body, url, date, article_class) %}
+{% macro page_content(title, body, url, external_url, date, article_class) %}
 <article {% if article_class %}class="{{ article_class }}"{% endif %}
   itemscope
   itemtype="http://schema.org/BlogPosting"
@@ -6,7 +6,7 @@
 
   <header>
     <h2 itemprop="headline">
-      <a itemprop="url" content="{{ url }}" href="{{ url }}">
+      <a itemprop="url" content="{{ external_url }}" href="{{ url }}">
         {{ title|typogrify }}
       </a>
     </h2>

@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 {% set site_title = config.SITE_TITLE|smartypants -%}
-<html>
+<html
+  itemscope
+  itemtype="http://schema.org/Blog">
 
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -14,6 +16,12 @@
           rel="alternate"
           title="{{ site_title }}"
           type="application/atom+xml" />
+    <link rel="author"
+          itemprop="author"
+          href="{{ url_for('.index_view', _external=True) }}"
+          content="Jordan Yelloz" />
+    <meta content="{{ site_title }}" itemprop="headline" />
+    <meta content="{{ url_for('.index_view', _external=True) }}" itemprop="url" />
     {%- block head_extra %}{% endblock head_extra %}
   </head>
 

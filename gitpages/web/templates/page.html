@@ -14,6 +14,7 @@
       title,
       body,
       page_url or page.to_url(),
+      page.to_url(_external=True),
       page.info.date,
       'single-page',
     )
