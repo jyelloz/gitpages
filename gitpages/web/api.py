@@ -24,21 +24,23 @@ PageInfo = namedtuple(
     'date slug ref title status blob_id path revision_date revision_slug',
 )
 
-PageInfo.to_url = lambda self: url_for(
+PageInfo.to_url = lambda self, _external=False: url_for(
     '.page_archive_view',
     year=self.date.year,
     month=self.date.month,
     day=self.date.day,
     slug=self.slug,
+    _external=_external,
 )
 
-PageInfo.to_url_tree = lambda self, tree_id: url_for(
+PageInfo.to_url_tree = lambda self, tree_id, _external=False: url_for(
     '.page_archive_view_ref',
     tree_id=tree_id,
     year=self.date.year,
     month=self.date.month,
     day=self.date.day,
     slug=self.slug,
+    _external=_external,
 )
 
 
@@ -47,8 +49,12 @@ Page = namedtuple(
     'info doc',
 )
 
-Page.to_url = lambda self: self.info.to_url()
-Page.to_url_tree = lambda self, tree_id: self.info.to_url_tree(tree_id)
+Page.to_url = lambda self, _external=False: (
+    self.info.to_url(_external=_external)
+)
+Page.to_url_tree = lambda self, tree_id, _external=False: (
+    self.info.to_url_tree(tree_id, _external=_external)
+)
 
 PageAttachmentMetadata = namedtuple(
     'PageAttachmentMetadata',
@@ -56,9 +62,12 @@ PageAttachmentMetadata = namedtuple(
 )
 
 
-PageAttachmentMetadata.to_url = lambda self, attachment=True: url_for(
-    '.attachment' if attachment else '.inline_attachment',
-    tree_id=self.attachment_id,
+PageAttachmentMetadata.to_url = (
+    lambda self, attachment=True, _external=False: url_for(
+        '.attachment' if attachment else '.inline_attachment',
+        tree_id=self.attachment_id,
+        _external=_external,
+    )
 )
 
 
@@ -82,9 +91,13 @@ PageAttachment = namedtuple(
     'metadata data',
 )
 
-PageAttachment.to_url = lambda self, attachment=True: self.metadata.to_url(
-    attachment
+PageAttachment.to_url = lambda self, attachment=True, _external=False: (
+    self.metadata.to_url(
+        attachment,
+        _external=False,
+    )
 )
+
 PageAttachment.filename = lambda self: self.metadata.filename()
 
 
