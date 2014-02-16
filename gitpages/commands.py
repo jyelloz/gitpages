@@ -1,5 +1,7 @@
+from functools import partial
+
 from flask import current_app
-from flask.ext.script import Command, Option
+from flask_script import Command, Option, Shell as _Shell
 
 from .web import ui
 
@@ -75,3 +77,74 @@ class GunicornServer(Command):
                 return app
 
         FlaskApplication().run()
+
+
+class Shell(_Shell):
+
+    def run(self, no_ipython, no_bpython):
+        '''A better version of run()'''
+
+        banner = self.banner
+        context = self.get_context()
+
+        def shells():
+
+            if not no_ipython:
+                yield self._ipython(banner, context)
+
+            if not no_bpython:
+                yield self._bpython(banner, context)
+
+            yield self._python(banner, context)
+
+        for shell in shells():
+            try:
+                shell()
+                return
+            except:
+                continue
+
+    @staticmethod
+    def _ipython(banner, context):
+
+        try:
+
+            from IPython.Shell import IPShellEmbed
+
+            return partial(
+                IPShellEmbed(banner=banner),
+                global_ns=dict(),
+                local_ns=context,
+            )
+
+        except ImportError:
+
+            from IPython.frontend.terminal.embed import InteractiveShellEmbed
+
+            return partial(
+                InteractiveShellEmbed(banner1=banner),
+                global_ns=dict(),
+                local_ns=context,
+            )
+
+    @staticmethod
+    def _bpython(banner, context):
+
+        from bpython import embed
+
+        return partial(
+            embed,
+            banner=banner,
+            locals_=context,
+        )
+
+    @staticmethod
+    def _python(banner, context):
+
+        from code import interact
+
+        return partial(
+            interact,
+            banner,
+            local=context,
+        )
