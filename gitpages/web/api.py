@@ -115,8 +115,8 @@ class GitPages(object):
         self._repo = repo
         self._searcher = searcher
 
-    @staticmethod
-    def _load_page_info(result):
+    @classmethod
+    def _load_page_info(cls, result):
 
         return PageInfo(
             slug=result['page_slug'],
@@ -130,8 +130,8 @@ class GitPages(object):
             revision_date=result['page_date'],
         )
 
-    @staticmethod
-    def _load_page_revision_info(page_result, page_revision_result):
+    @classmethod
+    def _load_page_revision_info(cls, page_result, page_revision_result):
 
         return PageInfo(
             slug=page_result['page_slug'],
@@ -145,25 +145,25 @@ class GitPages(object):
             revision_date=page_revision_result['revision_date'],
         )
 
-    @staticmethod
-    def _load_page(result, parts):
+    @classmethod
+    def _load_page(cls, result, parts):
         return Page(
-            info=GitPages._load_page_info(result),
+            info=cls._load_page_info(result),
             doc=parts,
         )
 
-    @staticmethod
-    def _load_page_revision(page_result, page_revision_result, parts):
+    @classmethod
+    def _load_page_revision(cls, page_result, page_revision_result, parts):
         return Page(
-            info=GitPages._load_page_revision_info(
+            info=cls._load_page_revision_info(
                 page_result,
                 page_revision_result,
             ),
             doc=parts,
         )
 
-    @staticmethod
-    def _load_attachment(repo, result):
+    @classmethod
+    def _load_attachment(cls, repo, result):
 
         metadata = PageAttachmentMetadata(
             attachment_id=result['attachment_id'],
@@ -198,7 +198,7 @@ class GitPages(object):
 
         parts = partial(render_page_content, blob)
 
-        return GitPages._load_page(
+        return self._load_page(
             page_result,
             parts,
         )
@@ -206,7 +206,7 @@ class GitPages(object):
     def page(self, date, slug, tree_id=None, statuses=_default_statuses):
 
         earliest = datetime(date.year, date.month, date.day)
-        latest = earliest + GitPages._max_timedelta
+        latest = earliest + self._max_timedelta
 
         statuses_clause = statuses_query('page', statuses)
 
@@ -238,7 +238,7 @@ class GitPages(object):
 
             parts = partial(render_page_content, blob)
 
-            return GitPages._load_page(
+            return self._load_page(
                 page_result,
                 parts,
             )
@@ -261,7 +261,7 @@ class GitPages(object):
 
         parts = partial(render_page_content, blob)
 
-        return GitPages._load_page_revision(
+        return self._load_page_revision(
             page_result,
             page_revision_result,
             parts,
@@ -345,7 +345,7 @@ class GitPages(object):
     ):
 
         earliest = datetime(date.year, date.month, date.day)
-        latest = earliest + GitPages._max_timedelta
+        latest = earliest + self._max_timedelta
 
         page_kind, attachment_kind = (
             ('page', 'page-attachment') if tree_id is None
@@ -385,7 +385,7 @@ class GitPages(object):
             return []
 
         return (
-            GitPages._load_attachment(self._repo, r)
+            self._load_attachment(self._repo, r)
             for r in results
         )
 
@@ -407,7 +407,7 @@ class GitPages(object):
         results = self._searcher.search(q)
 
         return (
-            GitPages._load_attachment(self._repo, r)
+            self._load_attachment(self._repo, r)
             for r in results
         )
 
@@ -443,7 +443,7 @@ class GitPages(object):
         )
 
         return (
-            GitPages._load_page_info(r)
+            self._load_page_info(r)
             for r in results
         )
 
@@ -479,7 +479,7 @@ class GitPages(object):
         )
 
         return (
-            GitPages._load_page_info(r)
+            self._load_page_info(r)
             for r in results
         )
 
@@ -498,7 +498,7 @@ class GitPages(object):
         )
 
         return (
-            GitPages._load_page_info(r)
+            self._load_page_info(r)
             for r in results
         )
 
@@ -549,7 +549,7 @@ class GitPages(object):
         )
 
         return (
-            GitPages._load_page(r, parts)
+            self._load_page(r, parts)
             for r, parts in results_parts
         ), results
 
