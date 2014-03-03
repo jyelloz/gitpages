@@ -194,7 +194,7 @@ class GitPages(object):
 
         page_result = next(iter(results))
 
-        blob = self._repo[page_result['page_blob_id']]
+        blob = self._repo.get_object(page_result['page_blob_id'])
 
         parts = partial(render_page_content, blob)
 
@@ -234,7 +234,7 @@ class GitPages(object):
         if tree_id is None:
 
             blob_id = page_result['page_blob_id']
-            blob = self._repo[blob_id]
+            blob = self._repo.get_object(blob_id)
 
             parts = partial(render_page_content, blob)
 
@@ -257,7 +257,7 @@ class GitPages(object):
         page_revision_result = next(iter(historic_results))
 
         blob_id = page_revision_result['revision_blob_id']
-        blob = self._repo[blob_id]
+        blob = self._repo.get_object(blob_id)
 
         parts = partial(render_page_content, blob)
 
@@ -329,7 +329,7 @@ class GitPages(object):
         attachment = PageAttachment(
             metadata=metadata,
             data=partial(
-                self._repo.__getitem__,
+                self._repo.get_object,
                 data_blob_id,
             ),
         )
@@ -539,7 +539,7 @@ class GitPages(object):
         )
 
         results_blobs = (
-            (r, self._repo[r['page_blob_id']])
+            (r, self._repo.get_object(r['page_blob_id']))
             for r in results
         )
 
