@@ -197,6 +197,8 @@ def setup_gitpages():
 
 def teardown_gitpages(exception=None):
 
+    _log.debug('tearing down gitpages')
+
     gitpages = getattr(g, 'gitpages', None)
     searcher = getattr(g, 'searcher', None)
 

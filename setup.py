@@ -24,7 +24,7 @@ setup(
         'dulwich',
         'Flask',
         'Flask-Failsafe',
-        'Flask-Script==0.5.3',
+        'Flask-Script',
         'Pygments',
         'python-dateutil',
         'pytz',

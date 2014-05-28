@@ -11,16 +11,12 @@ from .indexer import build_hybrid_index
 class BuildIndex(Command):
     '(re)builds GitPages index'
 
-    def handle(self, app, *args, **kwargs):
-
-        with app.test_request_context():
-            ui.setup_gitpages_application()
-            ui.setup_gitpages()
-            return self.run(*args, **kwargs)
-
     def run(self):
 
         from whoosh.query import Every
+
+        ui.setup_gitpages_application()
+        ui.setup_gitpages()
 
         index = current_app.index
 
@@ -119,13 +115,24 @@ class Shell(_Shell):
 
         except ImportError:
 
-            from IPython.frontend.terminal.embed import InteractiveShellEmbed
+            from IPython.terminal.embed import InteractiveShellEmbed
 
             return partial(
                 InteractiveShellEmbed(banner1=banner),
                 global_ns=dict(),
                 local_ns=context,
             )
+
+    @staticmethod
+    def _bpython_urwid(banner, context):
+
+        from bpython.urwid import main
+
+        return partial(
+            main,
+            banner=banner,
+            locals_=context,
+        )
 
     @staticmethod
     def _bpython(banner, context):
