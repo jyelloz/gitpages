@@ -24,12 +24,12 @@ setup(
         'dulwich',
         'Flask',
         'Flask-Failsafe',
-        'Flask-Script',
         'Pygments',
         'python-dateutil',
         'pytz',
         'typogrify',
         'Unidecode',
         'Whoosh>=2.5.4',
+        'click',
     ],
 )
