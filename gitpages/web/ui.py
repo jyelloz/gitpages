@@ -4,6 +4,8 @@ import logging
 from datetime import datetime
 from urlparse import urljoin
 
+import pytz
+
 from dateutil.relativedelta import relativedelta
 
 from flask import (
@@ -364,13 +366,15 @@ def atom_feed():
 
         doc = page.doc()
 
+        utc_date = page.info.date.astimezone(pytz.utc)
+
         feed.add(
             doc['title'],
             doc['body'],
             content_type='html',
             url=urljoin(request.url_root, page.to_url()),
-            updated=page.info.date,
-            published=page.info.date,
+            updated=utc_date,
+            published=utc_date,
         )
 
     return feed.get_response()
