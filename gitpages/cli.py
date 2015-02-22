@@ -57,8 +57,8 @@ def run_server(app, host, port, debug):
 @click.command('shell')
 @click.argument(
     'shell', metavar='[SHELL]',
-    type=click.Choice(['ipython', 'bpython-urwid', 'bpython', 'python']),
-    default='bpython-urwid',
+    type=click.Choice(['bpython', 'ipython', 'bpython-urwid', 'python']),
+    default='bpython',
 )
 @click.pass_obj
 def shell(app, shell):
@@ -99,10 +99,11 @@ def _bpython_urwid(banner, context):
 
 def _bpython(banner, context):
 
-    from bpython import embed
+    from bpython.curtsies import main
 
     return partial(
-        embed,
+        main,
+        args=[],
         banner=banner,
         locals_=context,
     )
