@@ -3,6 +3,7 @@
 import itertools
 import functools
 import posixpath
+import six
 
 PAGES_TREE, PAGE_RST = (
     'page',
@@ -33,7 +34,7 @@ def get_pages_tree(repository, ref='HEAD', commit=None):
 
 def find_pages(repository, pages_tree, prefix=PAGES_TREE):
 
-    page_entries = pages_tree.iteritems()
+    page_entries = six.iteritems(pages_tree)
 
     page_trees = ((e.path, repository[e.sha]) for e in page_entries)
 
@@ -62,7 +63,7 @@ def load_pages_with_attachments(repository, page_trees_with_rst):
 def find_page_rst_entry(page_tree):
 
     return next(
-        i for i in page_tree.iteritems()
+        i for i in six.iteritems(page_tree)
         if i.path == PAGE_RST
     )
 
@@ -77,11 +78,11 @@ def load_page_attachments(repository, page_tree):
     def load_page_attachment(attachment_tree):
 
         data = next(
-            i for i in attachment_tree.iteritems()
+            i for i in six.iteritems(attachment_tree)
             if i.path == ATTACHMENT_DATA
         )
         metadata_rst = next(
-            i for i in attachment_tree.iteritems()
+            i for i in six.iteritems(attachment_tree)
             if i.path == ATTACHMENT_METADATA_RST
         )
         data_blob_id = data.sha
@@ -99,7 +100,8 @@ def load_page_attachments(repository, page_tree):
         return attachment_tree.id, data_blob_id, metadata_blob_id, data_callable, metadata_callable
 
     attachments = next(
-        (i for i in page_tree.iteritems() if i.path == ATTACHMENTS_TREE), None
+        (i for i in six.iteritems(page_tree) if i.path == ATTACHMENTS_TREE),
+        None,
     )
 
     if attachments is None:
@@ -108,7 +110,7 @@ def load_page_attachments(repository, page_tree):
     page_attachments_tree = repository[attachments.sha]
 
     page_attachment_trees = (
-        repository[t.sha] for t in page_attachments_tree.iteritems()
+        repository[t.sha] for t in six.iteritems(page_attachments_tree)
     )
 
     return (load_page_attachment(t) for t in page_attachment_trees)
