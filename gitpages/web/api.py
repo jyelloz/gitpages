@@ -106,6 +106,18 @@ def statuses_query(status_field_prefix, statuses):
     return Or([Term(field_name, s) for s in statuses])
 
 
+def _to_ascii(s):
+    return s.encode('ascii')
+
+
+def _get_page_blob_id(result):
+    return _to_ascii(result['page_blob_id'])
+
+
+def _get_attachement_data_blob_id(result):
+    return _to_ascii(result['attachment_data_blob_id'])
+
+
 class GitPages(object):
 
     _max_timedelta = timedelta(days=1)
@@ -172,9 +184,11 @@ class GitPages(object):
             content_length=result['attachment_content_length'],
         )
 
+        attachment_data_blob_id = _get_attachement_data_blob_id(result)
+
         data = partial(
             repo.__getitem__,
-            result['attachment_data_blob_id'],
+            attachment_data_blob_id,
         )
 
         return PageAttachment(
@@ -194,7 +208,9 @@ class GitPages(object):
 
         page_result = next(iter(results))
 
-        blob = self._repo.get_object(page_result['page_blob_id'])
+        page_blob_id_bytes = _get_page_blob_id(page_result)
+
+        blob = self._repo.get_object(page_blob_id_bytes)
 
         parts = partial(render_page_content, blob)
 
@@ -233,7 +249,7 @@ class GitPages(object):
 
         if tree_id is None:
 
-            blob_id = page_result['page_blob_id']
+            blob_id = _get_page_blob_id(page_result)
             blob = self._repo.get_object(blob_id)
 
             parts = partial(render_page_content, blob)
@@ -318,7 +334,7 @@ class GitPages(object):
 
         result = next(iter(results))
 
-        data_blob_id = result['attachment_data_blob_id']
+        data_blob_id = _get_attachement_data_blob_id(result)
 
         metadata = PageAttachmentMetadata(
             attachment_id=result['attachment_id'],
@@ -530,6 +546,8 @@ class GitPages(object):
                 endexcl=bool(end_date_excl),
             )
 
+        repo = self._repo
+
         results = self._searcher.search_page(
             Term('kind', 'page') & query,
             pagenum=page_number,
@@ -538,9 +556,14 @@ class GitPages(object):
             reverse=True,
         )
 
-        results_blobs = (
-            (r, self._repo.get_object(r['page_blob_id']))
+        results_blob_ids = (
+            (r, _get_page_blob_id(r))
             for r in results
+        )
+
+        results_blobs = (
+            (r, repo.get_object(page_blob_id))
+            for r, page_blob_id in results_blob_ids
         )
 
         results_parts = (
