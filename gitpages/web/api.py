@@ -19,59 +19,67 @@ _content_disposition_expression = re.compile(
 )
 
 
+def _page_info_to_url(self, _external=False):
+    return url_for(
+        '.page_archive_view',
+        year=self.date.year,
+        month=self.date.month,
+        day=self.date.day,
+        slug=self.slug,
+        _external=_external,
+    )
+
+
+def _page_info_to_url_tree(self, tree_id, _external=False):
+    return url_for(
+        '.page_archive_view_ref',
+        tree_id=tree_id,
+        year=self.date.year,
+        month=self.date.month,
+        day=self.date.day,
+        slug=self.slug,
+        _external=_external,
+    )
+
 PageInfo = namedtuple(
     'PageInfo',
     'date slug ref title status blob_id path revision_date revision_slug',
 )
+PageInfo.to_url = _page_info_to_url
+PageInfo.to_url_tree = _page_info_to_url_tree
 
-PageInfo.to_url = lambda self, _external=False: url_for(
-    '.page_archive_view',
-    year=self.date.year,
-    month=self.date.month,
-    day=self.date.day,
-    slug=self.slug,
-    _external=_external,
-)
 
-PageInfo.to_url_tree = lambda self, tree_id, _external=False: url_for(
-    '.page_archive_view_ref',
-    tree_id=tree_id,
-    year=self.date.year,
-    month=self.date.month,
-    day=self.date.day,
-    slug=self.slug,
-    _external=_external,
-)
+def _page_to_url(self, _external=False):
+    return self.info.to_url(_external=_external)
+
+
+def _page_to_url_tree(self, tree_id, _external=False):
+    return self.info.to_url_tree(tree_id, _external=_external)
 
 
 Page = namedtuple(
     'Page',
     'info doc',
 )
+Page.to_url = _page_to_url
+Page.to_url_tree = _page_to_url_tree
 
-Page.to_url = lambda self, _external=False: (
-    self.info.to_url(_external=_external)
-)
-Page.to_url_tree = lambda self, tree_id, _external=False: (
-    self.info.to_url_tree(tree_id, _external=_external)
-)
+
+def _page_attachment_metadata_to_url(self, attachment=True, _external=False):
+    return url_for(
+        '.attachment' if attachment else '.inline_attachment',
+        tree_id=self.attachment_id,
+        _external=_external,
+    )
 
 PageAttachmentMetadata = namedtuple(
     'PageAttachmentMetadata',
     'attachment_id content_type content_disposition content_length',
 )
+PageAttachmentMetadata.to_url = _page_attachment_metadata_to_url
 
 
-PageAttachmentMetadata.to_url = (
-    lambda self, attachment=True, _external=False: url_for(
-        '.attachment' if attachment else '.inline_attachment',
-        tree_id=self.attachment_id,
-        _external=_external,
-    )
-)
-
-
-def _page_attachment_filename(self):
+def _page_attachment_metadata_filename(self):
 
     try:
 
@@ -84,21 +92,26 @@ def _page_attachment_filename(self):
     except:
         return self.attachment_id + '.bin'
 
-PageAttachmentMetadata.filename = _page_attachment_filename
+PageAttachmentMetadata.filename = _page_attachment_metadata_filename
 
 PageAttachment = namedtuple(
     'PageAttachment',
     'metadata data',
 )
 
-PageAttachment.to_url = lambda self, attachment=True, _external=False: (
-    self.metadata.to_url(
+
+def _page_attachment_filename(self):
+    return self.metadata.filename()
+
+
+def _page_attachment_to_url(self, attachment=True, _external=False):
+    return self.metadata.to_url(
         attachment,
         _external=False,
     )
-)
 
-PageAttachment.filename = lambda self: self.metadata.filename()
+PageAttachment.to_url = _page_attachment_to_url
+PageAttachment.filename = _page_attachment_filename
 
 
 def statuses_query(status_field_prefix, statuses):
