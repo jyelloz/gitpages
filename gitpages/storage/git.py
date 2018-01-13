@@ -5,15 +5,26 @@ import functools
 import posixpath
 import six
 
+
+def _from_bytes(s):
+    return s.decode('utf-8')
+
+
+def _to_bytes(s):
+    return s.encode('utf-8')
+
+
 PAGES_TREE, PAGE_RST = (
-    'page',
-    'page.rst',
+    u'page',
+    u'page.rst',
 )
 
+PAGES_TREE_BYTES, PAGE_RST_BYTES = map(_to_bytes, (PAGES_TREE, PAGE_RST))
+
 ATTACHMENTS_TREE, ATTACHMENT_METADATA_RST, ATTACHMENT_DATA = (
-    'attachment',
-    'metadata.rst',
-    'data',
+    b'attachment',
+    b'metadata.rst',
+    b'data',
 )
 
 
@@ -21,7 +32,7 @@ def iterable_nth(iterable, n, default=None):
     return next(itertools.islice(iterable, n, None), default)
 
 
-def get_pages_tree(repository, ref='HEAD', commit=None):
+def get_pages_tree(repository, ref=b'HEAD', commit=None):
 
     if commit is None:
         ref_commit = repository[repository.refs[ref]]
@@ -29,14 +40,17 @@ def get_pages_tree(repository, ref='HEAD', commit=None):
     else:
         root = repository[commit.tree]
 
-    return repository[root[PAGES_TREE][1]]
+    return repository[root[PAGES_TREE_BYTES][1]]
 
 
 def find_pages(repository, pages_tree, prefix=PAGES_TREE):
 
     page_entries = six.iteritems(pages_tree)
 
-    page_trees = ((e.path, repository[e.sha]) for e in page_entries)
+    page_trees = (
+        (_from_bytes(e.path), repository[e.sha])
+        for e in page_entries
+    )
 
     page_trees_with_rst_entries = (
         (p, t, find_page_rst_entry(t))
@@ -44,7 +58,7 @@ def find_pages(repository, pages_tree, prefix=PAGES_TREE):
     )
 
     return (
-        (posixpath.join(prefix, p, rst.path), t, rst)
+        (posixpath.join(prefix, p, _from_bytes(rst.path)), t, rst)
         for (p, t, rst) in page_trees_with_rst_entries
     )
 
@@ -64,7 +78,7 @@ def find_page_rst_entry(page_tree):
 
     return next(
         i for i in six.iteritems(page_tree)
-        if i.path == PAGE_RST
+        if _from_bytes(i.path) == PAGE_RST
     )
 
 
