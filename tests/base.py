@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask.testsuite import FlaskTestCase
+import unittest
 
 from dulwich.repo import MemoryRepo
 from dulwich.objects import Blob, Commit, Tree
@@ -44,7 +44,19 @@ This is a sample page with some attachments.
 """
 
 
-class GitPagesTestcase(FlaskTestCase):
+class GitPagesTestcase(unittest.TestCase):
+
+    def setUp(self):
+        self.setup()
+
+    def tearDown(self):
+        self.teardown()
+
+    def assert_equal(self, x, y):
+        self.assertEqual(x, y)
+
+    def assert_true(self, x):
+        self.assertTrue(x)
 
     def setup(self):
 
