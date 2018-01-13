@@ -74,11 +74,16 @@ def html5_visit_literal(self, node):
     self.body.append(
         self.starttag(node, 'span', '', CLASS='docutils literal'))
     text = node.astext()
+    # keep compatibility with older docutils
+    in_word_wrap_point = (
+        getattr(self, 'in_word_wrap_point', None) or
+        getattr(self, 'sollbruchstelle')
+    )
     for token in self.words_and_spaces.findall(text):
         if token.strip():
             # Protect text like "--an-option" and the regular expression
             # ``[+]?(\d+(\.\d*)?|\.\d+)`` from bad line wrapping
-            if self.sollbruchstelle.search(token):
+            if in_word_wrap_point.search(token):
                 self.body.append(
                     '<span class="pre">%s</span>' % self.encode(token)
                 )
