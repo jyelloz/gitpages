@@ -252,7 +252,7 @@ def get_docinfo_as_dict(doctree):
         )
 
         return (
-            str(children['field_name'].astext()),
+            children['field_name'].astext(),
             children['field_body'].astext(),
         )
 
