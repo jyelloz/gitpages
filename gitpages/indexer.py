@@ -152,33 +152,30 @@ def _write_attachment(writer, attachment, kind):
     :type kind: six.text_type
     """
 
-    (
-        attachment_tree_id,
-        data_blob_id, metadata_blob_id,
-        data_callable, metadata_callable,
-    ) = attachment
-
-    doctree = read_page_rst(metadata_callable().data)
+    attachment_tree_id = attachment.tree_id_text
+    metadata_blob_id = attachment.metadata_blob_id_text
+    data_blob_id = attachment.blob_id_text
+    doctree = read_page_rst(attachment.metadata.data)
     docinfo = get_docinfo_as_dict(doctree)
 
     content_disposition = docinfo.get(
         'content-disposition',
-        'inline',
+        u'inline',
     )
-    content_length = data_callable().raw_length()
+    content_length = attachment.data.raw_length()
     content_type = docinfo.get(
         'content-type',
-        'application/octet-stream',
+        u'application/octet-stream',
     )
 
     writer.add_document(
         kind=kind,
-        attachment_content_type=unicode(content_type),
+        attachment_content_type=content_type,
         attachment_content_length=content_length,
-        attachment_content_disposition=unicode(content_disposition),
-        attachment_metadata_blob_id=unicode(metadata_blob_id),
-        attachment_data_blob_id=unicode(data_blob_id),
-        attachment_id=unicode(attachment_tree_id),
+        attachment_content_disposition=content_disposition,
+        attachment_metadata_blob_id=metadata_blob_id,
+        attachment_data_blob_id=data_blob_id,
+        attachment_id=attachment_tree_id,
     )
 
 
