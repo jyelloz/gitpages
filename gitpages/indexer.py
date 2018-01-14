@@ -9,6 +9,10 @@ from dulwich.walk import Walker
 
 from .storage import git as git_storage
 from .util import slugify
+from .util.compat import (
+    _bytes_to_text as bytes_to_text,
+    _text_to_bytes as text_to_bytes,
+)
 
 
 _log = logging.getLogger(__name__)
@@ -55,7 +59,7 @@ def write_page(repo, writer, path, page, attachments):
     slug = slugify(title)
     date = parse_date(docinfo['date'])
     status = docinfo['status']
-    blob_id = git_storage._from_bytes(page.id)
+    blob_id = bytes_to_text(page.id)
 
     writer.add_document(
         kind=u'page',
@@ -123,14 +127,14 @@ def write_revision(repo, writer, commit, path):
             revision_title=title,
             revision_status=status,
             revision_path=path,
-            revision_blob_id=git_storage._from_bytes(blob_id),
-            revision_commit_id=git_storage._from_bytes(commit.id),
-            revision_tree_id=git_storage._from_bytes(tree_id),
-            revision_author=git_storage._from_bytes(commit.author),
-            revision_committer=git_storage._from_bytes(commit.committer),
+            revision_blob_id=bytes_to_text(blob_id),
+            revision_commit_id=bytes_to_text(commit.id),
+            revision_tree_id=bytes_to_text(tree_id),
+            revision_author=bytes_to_text(commit.author),
+            revision_committer=bytes_to_text(commit.committer),
             revision_author_time=author_time,
             revision_commit_time=commit_time,
-            revision_message=git_storage._from_bytes(commit.message),
+            revision_message=bytes_to_text(commit.message),
         )
 
         for attachment in attachments:
