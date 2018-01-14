@@ -55,15 +55,15 @@ def write_page(repo, writer, path, page, attachments):
     slug = slugify(title)
     date = parse_date(docinfo['date'])
     status = docinfo['status']
-    blob_id = unicode(page.id)
+    blob_id = git_storage._from_bytes(page.id)
 
     writer.add_document(
         kind=u'page',
         page_date=date,
         page_slug=slug,
-        page_title=unicode(title),
-        page_status=unicode(status),
-        page_path=unicode(path),
+        page_title=title,
+        page_status=status,
+        page_path=path,
         page_blob_id=blob_id,
     )
 
