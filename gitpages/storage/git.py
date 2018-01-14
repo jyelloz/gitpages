@@ -3,8 +3,9 @@
 import itertools
 import functools
 import posixpath
-import six
+from collections import namedtuple
 
+import six
 
 def _from_bytes(s):
     return s.decode('utf-8')
@@ -26,6 +27,70 @@ ATTACHMENTS_TREE, ATTACHMENT_METADATA_RST, ATTACHMENT_DATA = (
     b'metadata.rst',
     b'data',
 )
+
+
+PageRef = namedtuple(
+    'PageRef',
+    [
+        'path',
+        'tree',
+        'entry',
+    ],
+)
+
+
+_PageBase = namedtuple(
+    'Page',
+    [
+        'path',
+        'page',
+        'attachments',
+    ],
+)
+
+
+class Page(_PageBase):
+
+    @property
+    def attachments(self):
+        '''
+        :return: iterable(PageAttachment)
+        '''
+        return super(Page, self).attachments
+
+
+_PageAttachmentBase = namedtuple(
+    'PageAttachment',
+    [
+        'tree_id',
+        'blob_id',
+        'metadata_blob_id',
+        'data',
+        'metadata',
+    ],
+)
+
+class PageAttachment(_PageAttachmentBase):
+
+    @property
+    def tree_id_text(self):
+        return _from_bytes(self.tree_id)
+
+    @property
+    def blob_id_text(self):
+        return _from_bytes(self.blob_id)
+
+    @property
+    def metadata_blob_id_text(self):
+        return _from_bytes(self.metadata_blob_id)
+
+    @property
+    def data(self):
+        return super(PageAttachment, self).data()
+
+    @property
+    def metadata(self):
+        return super(PageAttachment, self).metadata()
 
 
 def iterable_nth(iterable, n, default=None):
