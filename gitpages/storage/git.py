@@ -8,10 +8,16 @@ from collections import namedtuple
 import six
 
 def _from_bytes(s):
+    """
+    :rtype: six.text_type
+    """
     return s.decode('utf-8')
 
 
 def _to_bytes(s):
+    """
+    :rtype: six.binary_type
+    """
     return s.encode('utf-8')
 
 
@@ -98,6 +104,10 @@ def iterable_nth(iterable, n, default=None):
 
 
 def get_pages_tree(repository, ref=b'HEAD', commit=None):
+    """
+    :type repository: dulwich.repo.BaseRepo
+    :rtype: dulwich.objects.Tree
+    """
 
     if commit is None:
         ref_commit = repository[repository.refs[ref]]
@@ -109,6 +119,9 @@ def get_pages_tree(repository, ref=b'HEAD', commit=None):
 
 
 def find_pages(repository, pages_tree, prefix=PAGES_TREE):
+    """
+    :rtype: list(PageRef)
+    """
 
     page_entries = six.iteritems(pages_tree)
 
@@ -133,6 +146,11 @@ def find_pages(repository, pages_tree, prefix=PAGES_TREE):
 
 
 def load_pages_with_attachments(repository, page_trees_with_rst):
+    """
+    :type repository: dulwich.repo.BaseRepo
+    :rtype: list(Page)
+    """
+
     return (
         Page(
             path,
@@ -144,6 +162,10 @@ def load_pages_with_attachments(repository, page_trees_with_rst):
 
 
 def find_page_rst_entry(page_tree):
+    """
+    :type page_tree: dulwich.objects.Tree
+    :rtype: dulwich.objects.TreeEntry
+    """
 
     return next(
         i for i in six.iteritems(page_tree)
@@ -152,13 +174,27 @@ def find_page_rst_entry(page_tree):
 
 
 def load_page_data(repository, page_rst_entry):
+    """
+    :type repository: dulwich.repo.BaseRepo
+    :type page_rst_entry: dulwich.objects.TreeEntry
+    :rtype: dulwich.objects.Blob
+    """
 
     return repository[page_rst_entry.sha]
 
 
 def load_page_attachments(repository, page_tree):
+    """
+    :type repository: dulwich.repo.BaseRepo
+    :type page_tree: dulwich.objects.Tree
+    :rtype: iterable(PageAttachment)
+    """
 
     def load_page_attachment(attachment_tree):
+        """
+        :type attachment_tree: dulwich.objects.Tree
+        :rtype: PageAttachment
+        """
 
         data = next(
             i for i in six.iteritems(attachment_tree)
