@@ -179,11 +179,11 @@ def _write_attachment(writer, attachment, kind):
     )
 
 
-def build_hybrid_index(index, repo, ref='HEAD'):
+def build_hybrid_index(index, repo, ref=b'HEAD'):
     """
     :type index: whoosh.index.Index
     :type repo: dulwich.repo.BaseRepo
-    :type ref: six.text_type
+    :type ref: six.binary_type
     """
 
     head = repo.refs[ref]
