@@ -16,14 +16,14 @@ _log = logging.getLogger(__name__)
 
 def get_index(index_path, index_name, schema):
 
-    from os import makedirs
+    from os import makedirs, error as OSError
     from os.path import isdir
 
     from whoosh import index
 
     try:
         makedirs(index_path)
-    except:
+    except OSError:
         if not isdir(index_path):
             raise
 
