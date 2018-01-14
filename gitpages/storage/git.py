@@ -7,18 +7,10 @@ from collections import namedtuple
 
 import six
 
-def _from_bytes(s):
-    """
-    :rtype: six.text_type
-    """
-    return s.decode('utf-8')
-
-
-def _to_bytes(s):
-    """
-    :rtype: six.binary_type
-    """
-    return s.encode('utf-8')
+from ..util.compat import (
+    _text_to_bytes as _to_bytes,
+    _bytes_to_text as _from_bytes,
+)
 
 
 PAGES_TREE, PAGE_RST = (
