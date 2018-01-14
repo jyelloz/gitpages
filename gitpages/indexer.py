@@ -75,9 +75,14 @@ def write_revision(repo, writer, commit, path):
 
     from posixpath import dirname
 
+    path_bytes = git_storage._to_bytes(path)
+
     tree_id = commit.tree
     tree = repo[tree_id]
-    mode, blob_id = tree.lookup_path(repo.get_object, path)
+    mode, blob_id = tree.lookup_path(
+        repo.get_object,
+        path_bytes,
+    )
 
     commit_time = datetime.fromtimestamp(
         commit.commit_time,
@@ -99,10 +104,11 @@ def write_revision(repo, writer, commit, path):
     status = docinfo['status']
 
     page_tree_path = dirname(path)
+    page_tree_path_bytes = git_storage._to_bytes(page_tree_path)
 
     page_tree_mode, page_tree_id = tree.lookup_path(
         repo.get_object,
-        page_tree_path,
+        page_tree_path_bytes,
     )
 
     page_tree = repo[page_tree_id]
@@ -113,18 +119,18 @@ def write_revision(repo, writer, commit, path):
         writer.add_document(
             kind=u'revision',
             revision_date=date,
-            revision_slug=unicode(slug),
-            revision_title=unicode(title),
-            revision_status=unicode(status),
-            revision_path=unicode(path),
-            revision_blob_id=unicode(blob_id),
-            revision_commit_id=unicode(commit.id),
-            revision_tree_id=unicode(tree_id),
-            revision_author=unicode(commit.author),
-            revision_committer=unicode(commit.committer),
+            revision_slug=slug,
+            revision_title=title,
+            revision_status=status,
+            revision_path=path,
+            revision_blob_id=git_storage._from_bytes(blob_id),
+            revision_commit_id=git_storage._from_bytes(commit.id),
+            revision_tree_id=git_storage._from_bytes(tree_id),
+            revision_author=git_storage._from_bytes(commit.author),
+            revision_committer=git_storage._from_bytes(commit.committer),
             revision_author_time=author_time,
             revision_commit_time=commit_time,
-            revision_message=unicode(commit.message),
+            revision_message=git_storage._from_bytes(commit.message),
         )
 
         for attachment in attachments:
