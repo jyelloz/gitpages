@@ -119,16 +119,16 @@ def statuses_query(status_field_prefix, statuses):
     return Or([Term(field_name, s) for s in statuses])
 
 
-def _to_ascii(s):
+def _to_bytes(s):
     return s.encode('ascii')
 
 
 def _get_page_blob_id(result):
-    return _to_ascii(result['page_blob_id'])
+    return _to_bytes(result['page_blob_id'])
 
 
 def _get_attachement_data_blob_id(result):
-    return _to_ascii(result['attachment_data_blob_id'])
+    return _to_bytes(result['attachment_data_blob_id'])
 
 
 class GitPages(object):
