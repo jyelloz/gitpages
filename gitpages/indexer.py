@@ -192,10 +192,12 @@ def build_hybrid_index(index, repo, ref=b'HEAD'):
 
         from posixpath import dirname
 
+        parent_path_bytes = git_storage._to_bytes(dirname(path))
+
         return Walker(
             store=repo.object_store,
             include=[head],
-            paths=[dirname(path)],
+            paths=[parent_path_bytes],
             follow=True,
         )
 
