@@ -123,14 +123,18 @@ def find_pages(repository, pages_tree, prefix=PAGES_TREE):
     )
 
     return (
-        (posixpath.join(prefix, p, _from_bytes(rst.path)), t, rst)
+        PageRef(
+            posixpath.join(prefix, p, _from_bytes(rst.path)),
+            t,
+            rst
+        )
         for (p, t, rst) in page_trees_with_rst_entries
     )
 
 
 def load_pages_with_attachments(repository, page_trees_with_rst):
     return (
-        (
+        Page(
             path,
             load_page_data(repository, page_rst_entry),
             load_page_attachments(repository, page_tree),
@@ -176,7 +180,7 @@ def load_page_attachments(repository, page_tree):
             metadata_blob_id,
         )
 
-        return (
+        return PageAttachment(
             attachment_tree.id,
             data_blob_id,
             metadata_blob_id,
