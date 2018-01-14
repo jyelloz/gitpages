@@ -5,6 +5,7 @@ This is all code that I did not write.
 '''
 
 import re
+import six
 from functools import wraps
 
 from unidecode import unidecode
@@ -33,7 +34,7 @@ def slugify(text, delim=u'-'):
     for word in _punct_re.split(text_stripped):
         result.extend(unidecode(word).split())
 
-    return unicode(delim.join(result))
+    return six.text_type(delim.join(result))
 
 
 def cached(key, key_builder=None, timeout=5 * 60):
