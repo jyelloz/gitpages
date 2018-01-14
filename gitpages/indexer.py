@@ -41,6 +41,12 @@ def get_index(index_path, index_name, schema):
 
 
 def write_page(repo, writer, path, page, attachments):
+    """
+    :type repo: dulwich.repo.BaseRepo
+    :type writer: whoosh.writing.IndexWriter
+    :type path: six.text_type
+    :type page: dulwich.objects.Blob
+    """
 
     doctree = read_page_rst(page.data)
     title = get_title(doctree)
@@ -134,6 +140,11 @@ def write_revision_attachment(writer, attachment):
 
 
 def _write_attachment(writer, attachment, kind):
+    """
+    :type writer: whoosh.writing.IndexWriter
+    :type attachment: gitpages.storage.git.PageAttachment
+    :type kind: six.text_type
+    """
 
     (
         attachment_tree_id,
@@ -166,6 +177,11 @@ def _write_attachment(writer, attachment, kind):
 
 
 def build_hybrid_index(index, repo, ref='HEAD'):
+    """
+    :type index: whoosh.index.Index
+    :type repo: dulwich.repo.BaseRepo
+    :type ref: six.text_type
+    """
 
     head = repo.refs[ref]
 
