@@ -19,59 +19,67 @@ _content_disposition_expression = re.compile(
 )
 
 
+def _page_info_to_url(self, _external=False):
+    return url_for(
+        '.page_archive_view',
+        year=self.date.year,
+        month=self.date.month,
+        day=self.date.day,
+        slug=self.slug,
+        _external=_external,
+    )
+
+
+def _page_info_to_url_tree(self, tree_id, _external=False):
+    return url_for(
+        '.page_archive_view_ref',
+        tree_id=tree_id,
+        year=self.date.year,
+        month=self.date.month,
+        day=self.date.day,
+        slug=self.slug,
+        _external=_external,
+    )
+
 PageInfo = namedtuple(
     'PageInfo',
     'date slug ref title status blob_id path revision_date revision_slug',
 )
+PageInfo.to_url = _page_info_to_url
+PageInfo.to_url_tree = _page_info_to_url_tree
 
-PageInfo.to_url = lambda self, _external=False: url_for(
-    '.page_archive_view',
-    year=self.date.year,
-    month=self.date.month,
-    day=self.date.day,
-    slug=self.slug,
-    _external=_external,
-)
 
-PageInfo.to_url_tree = lambda self, tree_id, _external=False: url_for(
-    '.page_archive_view_ref',
-    tree_id=tree_id,
-    year=self.date.year,
-    month=self.date.month,
-    day=self.date.day,
-    slug=self.slug,
-    _external=_external,
-)
+def _page_to_url(self, _external=False):
+    return self.info.to_url(_external=_external)
+
+
+def _page_to_url_tree(self, tree_id, _external=False):
+    return self.info.to_url_tree(tree_id, _external=_external)
 
 
 Page = namedtuple(
     'Page',
     'info doc',
 )
+Page.to_url = _page_to_url
+Page.to_url_tree = _page_to_url_tree
 
-Page.to_url = lambda self, _external=False: (
-    self.info.to_url(_external=_external)
-)
-Page.to_url_tree = lambda self, tree_id, _external=False: (
-    self.info.to_url_tree(tree_id, _external=_external)
-)
+
+def _page_attachment_metadata_to_url(self, attachment=True, _external=False):
+    return url_for(
+        '.attachment' if attachment else '.inline_attachment',
+        tree_id=self.attachment_id,
+        _external=_external,
+    )
 
 PageAttachmentMetadata = namedtuple(
     'PageAttachmentMetadata',
     'attachment_id content_type content_disposition content_length',
 )
+PageAttachmentMetadata.to_url = _page_attachment_metadata_to_url
 
 
-PageAttachmentMetadata.to_url = (
-    lambda self, attachment=True, _external=False: url_for(
-        '.attachment' if attachment else '.inline_attachment',
-        tree_id=self.attachment_id,
-        _external=_external,
-    )
-)
-
-
-def _page_attachment_filename(self):
+def _page_attachment_metadata_filename(self):
 
     try:
 
@@ -84,26 +92,43 @@ def _page_attachment_filename(self):
     except:
         return self.attachment_id + '.bin'
 
-PageAttachmentMetadata.filename = _page_attachment_filename
+PageAttachmentMetadata.filename = _page_attachment_metadata_filename
 
 PageAttachment = namedtuple(
     'PageAttachment',
     'metadata data',
 )
 
-PageAttachment.to_url = lambda self, attachment=True, _external=False: (
-    self.metadata.to_url(
+
+def _page_attachment_filename(self):
+    return self.metadata.filename()
+
+
+def _page_attachment_to_url(self, attachment=True, _external=False):
+    return self.metadata.to_url(
         attachment,
         _external=False,
     )
-)
 
-PageAttachment.filename = lambda self: self.metadata.filename()
+PageAttachment.to_url = _page_attachment_to_url
+PageAttachment.filename = _page_attachment_filename
 
 
 def statuses_query(status_field_prefix, statuses):
     field_name = status_field_prefix + '_status'
     return Or([Term(field_name, s) for s in statuses])
+
+
+def _to_bytes(s):
+    return s.encode('ascii')
+
+
+def _get_page_blob_id(result):
+    return _to_bytes(result['page_blob_id'])
+
+
+def _get_attachement_data_blob_id(result):
+    return _to_bytes(result['attachment_data_blob_id'])
 
 
 class GitPages(object):
@@ -172,9 +197,11 @@ class GitPages(object):
             content_length=result['attachment_content_length'],
         )
 
+        attachment_data_blob_id = _get_attachement_data_blob_id(result)
+
         data = partial(
             repo.__getitem__,
-            result['attachment_data_blob_id'],
+            attachment_data_blob_id,
         )
 
         return PageAttachment(
@@ -194,7 +221,9 @@ class GitPages(object):
 
         page_result = next(iter(results))
 
-        blob = self._repo.get_object(page_result['page_blob_id'])
+        page_blob_id_bytes = _get_page_blob_id(page_result)
+
+        blob = self._repo.get_object(page_blob_id_bytes)
 
         parts = partial(render_page_content, blob)
 
@@ -233,7 +262,7 @@ class GitPages(object):
 
         if tree_id is None:
 
-            blob_id = page_result['page_blob_id']
+            blob_id = _get_page_blob_id(page_result)
             blob = self._repo.get_object(blob_id)
 
             parts = partial(render_page_content, blob)
@@ -318,7 +347,7 @@ class GitPages(object):
 
         result = next(iter(results))
 
-        data_blob_id = result['attachment_data_blob_id']
+        data_blob_id = _get_attachement_data_blob_id(result)
 
         metadata = PageAttachmentMetadata(
             attachment_id=result['attachment_id'],
@@ -530,6 +559,8 @@ class GitPages(object):
                 endexcl=bool(end_date_excl),
             )
 
+        repo = self._repo
+
         results = self._searcher.search_page(
             Term('kind', 'page') & query,
             pagenum=page_number,
@@ -538,9 +569,14 @@ class GitPages(object):
             reverse=True,
         )
 
-        results_blobs = (
-            (r, self._repo.get_object(r['page_blob_id']))
+        results_blob_ids = (
+            (r, _get_page_blob_id(r))
             for r in results
+        )
+
+        results_blobs = (
+            (r, repo.get_object(page_blob_id))
+            for r, page_blob_id in results_blob_ids
         )
 
         results_parts = (

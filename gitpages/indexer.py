@@ -9,6 +9,10 @@ from dulwich.walk import Walker
 
 from .storage import git as git_storage
 from .util import slugify
+from .util.compat import (
+    _bytes_to_text as bytes_to_text,
+    _text_to_bytes as text_to_bytes,
+)
 
 
 _log = logging.getLogger(__name__)
@@ -16,14 +20,14 @@ _log = logging.getLogger(__name__)
 
 def get_index(index_path, index_name, schema):
 
-    from os import makedirs
+    from os import makedirs, error as OSError
     from os.path import isdir
 
     from whoosh import index
 
     try:
         makedirs(index_path)
-    except:
+    except OSError:
         if not isdir(index_path):
             raise
 
@@ -41,6 +45,12 @@ def get_index(index_path, index_name, schema):
 
 
 def write_page(repo, writer, path, page, attachments):
+    """
+    :type repo: dulwich.repo.BaseRepo
+    :type writer: whoosh.writing.IndexWriter
+    :type path: six.text_type
+    :type page: dulwich.objects.Blob
+    """
 
     doctree = read_page_rst(page.data)
     title = get_title(doctree)
@@ -49,15 +59,15 @@ def write_page(repo, writer, path, page, attachments):
     slug = slugify(title)
     date = parse_date(docinfo['date'])
     status = docinfo['status']
-    blob_id = unicode(page.id)
+    blob_id = bytes_to_text(page.id)
 
     writer.add_document(
         kind=u'page',
         page_date=date,
         page_slug=slug,
-        page_title=unicode(title),
-        page_status=unicode(status),
-        page_path=unicode(path),
+        page_title=title,
+        page_status=status,
+        page_path=path,
         page_blob_id=blob_id,
     )
 
@@ -69,9 +79,14 @@ def write_revision(repo, writer, commit, path):
 
     from posixpath import dirname
 
+    path_bytes = git_storage._to_bytes(path)
+
     tree_id = commit.tree
     tree = repo[tree_id]
-    mode, blob_id = tree.lookup_path(repo.get_object, path)
+    mode, blob_id = tree.lookup_path(
+        repo.get_object,
+        path_bytes,
+    )
 
     commit_time = datetime.fromtimestamp(
         commit.commit_time,
@@ -93,10 +108,11 @@ def write_revision(repo, writer, commit, path):
     status = docinfo['status']
 
     page_tree_path = dirname(path)
+    page_tree_path_bytes = git_storage._to_bytes(page_tree_path)
 
     page_tree_mode, page_tree_id = tree.lookup_path(
         repo.get_object,
-        page_tree_path,
+        page_tree_path_bytes,
     )
 
     page_tree = repo[page_tree_id]
@@ -107,18 +123,18 @@ def write_revision(repo, writer, commit, path):
         writer.add_document(
             kind=u'revision',
             revision_date=date,
-            revision_slug=unicode(slug),
-            revision_title=unicode(title),
-            revision_status=unicode(status),
-            revision_path=unicode(path),
-            revision_blob_id=unicode(blob_id),
-            revision_commit_id=unicode(commit.id),
-            revision_tree_id=unicode(tree_id),
-            revision_author=unicode(commit.author),
-            revision_committer=unicode(commit.committer),
+            revision_slug=slug,
+            revision_title=title,
+            revision_status=status,
+            revision_path=path,
+            revision_blob_id=bytes_to_text(blob_id),
+            revision_commit_id=bytes_to_text(commit.id),
+            revision_tree_id=bytes_to_text(tree_id),
+            revision_author=bytes_to_text(commit.author),
+            revision_committer=bytes_to_text(commit.committer),
             revision_author_time=author_time,
             revision_commit_time=commit_time,
-            revision_message=unicode(commit.message),
+            revision_message=bytes_to_text(commit.message),
         )
 
         for attachment in attachments:
@@ -134,38 +150,45 @@ def write_revision_attachment(writer, attachment):
 
 
 def _write_attachment(writer, attachment, kind):
+    """
+    :type writer: whoosh.writing.IndexWriter
+    :type attachment: gitpages.storage.git.PageAttachment
+    :type kind: six.text_type
+    """
 
-    (
-        attachment_tree_id,
-        data_blob_id, metadata_blob_id,
-        data_callable, metadata_callable,
-    ) = attachment
-
-    doctree = read_page_rst(metadata_callable().data)
+    attachment_tree_id = attachment.tree_id_text
+    metadata_blob_id = attachment.metadata_blob_id_text
+    data_blob_id = attachment.blob_id_text
+    doctree = read_page_rst(attachment.metadata.data)
     docinfo = get_docinfo_as_dict(doctree)
 
     content_disposition = docinfo.get(
         'content-disposition',
-        'inline',
+        u'inline',
     )
-    content_length = data_callable().raw_length()
+    content_length = attachment.data.raw_length()
     content_type = docinfo.get(
         'content-type',
-        'application/octet-stream',
+        u'application/octet-stream',
     )
 
     writer.add_document(
         kind=kind,
-        attachment_content_type=unicode(content_type),
+        attachment_content_type=content_type,
         attachment_content_length=content_length,
-        attachment_content_disposition=unicode(content_disposition),
-        attachment_metadata_blob_id=unicode(metadata_blob_id),
-        attachment_data_blob_id=unicode(data_blob_id),
-        attachment_id=unicode(attachment_tree_id),
+        attachment_content_disposition=content_disposition,
+        attachment_metadata_blob_id=metadata_blob_id,
+        attachment_data_blob_id=data_blob_id,
+        attachment_id=attachment_tree_id,
     )
 
 
-def build_hybrid_index(index, repo, ref='HEAD'):
+def build_hybrid_index(index, repo, ref=b'HEAD'):
+    """
+    :type index: whoosh.index.Index
+    :type repo: dulwich.repo.BaseRepo
+    :type ref: six.binary_type
+    """
 
     head = repo.refs[ref]
 
@@ -173,10 +196,12 @@ def build_hybrid_index(index, repo, ref='HEAD'):
 
         from posixpath import dirname
 
+        parent_path_bytes = git_storage._to_bytes(dirname(path))
+
         return Walker(
             store=repo.object_store,
             include=[head],
-            paths=[dirname(path)],
+            paths=[parent_path_bytes],
             follow=True,
         )
 
@@ -231,7 +256,7 @@ def get_docinfo_as_dict(doctree):
         )
 
         return (
-            str(children['field_name'].astext()),
+            children['field_name'].astext(),
             children['field_body'].astext(),
         )
 

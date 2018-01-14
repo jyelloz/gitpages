@@ -37,5 +37,6 @@ class GitPagesHTMLTranslator(HTMLTranslator):
     def depart_strikethrough(self, node):
         self.body.append('</del>')
 
+
 GitPagesHTMLTranslator.visit_literal = html5_visit_literal
 GitPagesHTMLTranslator.visit_system_message = html5_visit_system_message

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from six import print_ as pr
+
 from nose.tools import raises
 
 from gitpages.web.exceptions import PageNotFound, AttachmentNotFound
@@ -26,7 +28,7 @@ class APITestCase(GitPagesTestcase):
         attachments = list(self.api.attachments_by_path(path))
 
         for attachment in attachments:
-            print attachment
+            pr(attachment)
 
     def test_attachments_by_path_empty(self):
 

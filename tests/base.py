@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask.testsuite import FlaskTestCase
+import unittest
 
 from dulwich.repo import MemoryRepo
 from dulwich.objects import Blob, Commit, Tree
@@ -12,7 +12,7 @@ from gitpages.web.api import GitPages
 from gitpages.web.schema import DateRevisionHybrid
 
 
-_SAMPLE_PAGE_RST = """\
+_SAMPLE_PAGE_RST = b"""\
 Sample Page
 ===========
 
@@ -29,7 +29,7 @@ Here is some ``inline literal text``.
 
 """
 
-_SAMPLE_PAGE_WITH_ATTACHMENTS_RST = """\
+_SAMPLE_PAGE_WITH_ATTACHMENTS_RST = b"""\
 Sample Page With Attachments
 ============================
 
@@ -43,8 +43,21 @@ Sample Page With Attachments
 This is a sample page with some attachments.
 """
 
+_PAGE_RST = b'page.rst'
 
-class GitPagesTestcase(FlaskTestCase):
+class GitPagesTestcase(unittest.TestCase):
+
+    def setUp(self):
+        self.setup()
+
+    def tearDown(self):
+        self.teardown()
+
+    def assert_equal(self, x, y):
+        self.assertEqual(x, y)
+
+    def assert_true(self, x):
+        self.assertTrue(x)
 
     def setup(self):
 
@@ -64,33 +77,33 @@ class GitPagesTestcase(FlaskTestCase):
         store.add_object(sample_page_with_attachments_rst_blob)
 
         sample_page_tree = Tree()
-        sample_page_tree.add('page.rst', 0100644, sample_page_rst_blob.id)
+        sample_page_tree.add(_PAGE_RST, 0o100644, sample_page_rst_blob.id)
         store.add_object(sample_page_tree)
 
         sample_page_with_attachments_tree = Tree()
         sample_page_with_attachments_tree.add(
-            'page.rst', 0100644, sample_page_with_attachments_rst_blob.id
+            _PAGE_RST, 0o100644, sample_page_with_attachments_rst_blob.id
         )
         store.add_object(sample_page_with_attachments_tree)
 
         pages_tree = Tree()
-        pages_tree.add('sample-page', 0100755, sample_page_tree.id)
+        pages_tree.add(b'sample-page', 0o100755, sample_page_tree.id)
         pages_tree.add(
-            'sample-page-with-attachments',
-            0100755,
+            b'sample-page-with-attachments',
+            0o100755,
             sample_page_with_attachments_tree.id,
         )
         store.add_object(pages_tree)
 
         root_tree = Tree()
-        root_tree.add('page', 0100755, pages_tree.id)
+        root_tree.add(b'page', 0o100755, pages_tree.id)
         store.add_object(root_tree)
 
         c = Commit()
         c.tree = root_tree.id
-        c.message = 'initial commit'
-        c.committer = 'test committer <test@committer>'
-        c.author = 'test author <test@author>'
+        c.message = b'initial commit'
+        c.committer = b'test committer <test@committer>'
+        c.author = b'test author <test@author>'
         c.commit_time = 1174773719
         c.author_time = 1174773719
         c.commit_timezone = 0
@@ -98,13 +111,13 @@ class GitPagesTestcase(FlaskTestCase):
 
         store.add_object(c)
 
-        repo.refs['refs/heads/master'] = c.id
-        repo.refs['HEAD'] = c.id
+        repo.refs[b'refs/heads/master'] = c.id
+        repo.refs[b'HEAD'] = c.id
 
         build_hybrid_index(
             index=index,
             repo=repo,
-            ref='HEAD',
+            ref=b'HEAD',
         )
 
         searcher = index.searcher()

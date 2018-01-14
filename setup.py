@@ -31,5 +31,6 @@ setup(
         'Unidecode',
         'Whoosh>=2.5.4',
         'click',
+        'six',
     ],
 )
