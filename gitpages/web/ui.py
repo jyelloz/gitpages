@@ -17,6 +17,7 @@ from werkzeug.contrib.atom import AtomFeed
 from .exceptions import PageNotFound, AttachmentNotFound
 from .schema import DateRevisionHybrid
 from .api import GitPages
+from ..util import compat
 
 
 _log = logging.getLogger(__name__)
@@ -179,7 +180,7 @@ def setup_gitpages_application():
     )
 
     current_app.repo = repo
-    current_app.default_ref = ref
+    current_app.default_ref = compat._text_to_bytes(ref)
     current_app.allowed_statuses = config['GITPAGES_ALLOWED_STATUSES']
     current_app.timezone = config['TIMEZONE']
     current_app.index = index
