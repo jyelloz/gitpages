@@ -117,7 +117,7 @@ class GitPagesTestcase(unittest.TestCase):
         build_hybrid_index(
             index=index,
             repo=repo,
-            ref='HEAD',
+            ref=b'HEAD',
         )
 
         searcher = index.searcher()
