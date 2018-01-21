@@ -76,6 +76,8 @@ def write_page(writer, path, page, attachments):
         page_blob_id=blob_id,
     )
 
+    writer.add_document(kind=u'page-dummy-child')
+
     for attachment in attachments:
         write_page_attachment(writer, attachment)
 
@@ -146,6 +148,8 @@ def write_revision(repo, writer, commit, path):
             revision_commit_time=commit_time,
             revision_message=bytes_to_text(commit.message),
         )
+
+        writer.add_document(kind=u'revision-dummy-child')
 
         for attachment in attachments:
             write_revision_attachment(writer, attachment)
