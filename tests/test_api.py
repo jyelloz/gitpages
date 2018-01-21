@@ -1,19 +1,50 @@
 # -*- coding: utf-8 -*-
 
-from six import print_ as pr
-
 from pytest import raises
 
 from gitpages.web.exceptions import PageNotFound, AttachmentNotFound
 
-from .base import GitPagesTestcase
+from .base import GitPagesTestcase, _ATTACH_1
+from gitpages.util.compat import _text_to_bytes
+
+from datetime import date
 
 
 class APITestCase(GitPagesTestcase):
 
+    PAGE = u'sample-page'
+    PAGE_PATH = u'page/{}/page.rst'.format(PAGE)
+    PAGE_WITH_ATTACHMENTS = u'sample-page-with-attachments'
+    PAGE_WITH_ATTACHMENTS_PATH = u'page/{}/page.rst'.format(
+        PAGE_WITH_ATTACHMENTS
+    )
+
+    def test_when__page__hasnoattachments__then_attachments__isempty(self):
+
+        attachments = self.api.attachments(
+            date(2012, 11, 11),
+            self.PAGE,
+        )
+
+        assert not attachments
+
+    def test_when__page__hasattachments__then_attachments__isnotempty(self):
+
+        attachments = self.api.attachments(
+            date(2012, 12, 12),
+            self.PAGE_WITH_ATTACHMENTS,
+        )
+
+        a = next(attachments)
+
+        self.assert_equal(
+            _text_to_bytes(a.filename),
+            _ATTACH_1,
+        )
+
     def test_page_by_path(self):
 
-        sample_page = self.api.page_by_path('page/sample-page/page.rst')
+        sample_page = self.api.page_by_path(self.PAGE_PATH)
         self.assert_true(sample_page)
 
     def test_page_by_path_not_found(self):
@@ -22,25 +53,26 @@ class APITestCase(GitPagesTestcase):
 
     def test_attachments_by_path(self):
 
-        path = 'page/sample-page-with-attachments/page.rst'
+        attachments = self.api.attachments_by_path(
+            self.PAGE_WITH_ATTACHMENTS_PATH
+        )
 
-        attachments = list(self.api.attachments_by_path(path))
+        a = next(attachments)
 
-        for attachment in attachments:
-            pr(attachment)
+        self.assert_equal(
+            _text_to_bytes(a.filename),
+            _ATTACH_1,
+        )
 
     def test_attachments_by_path_empty(self):
 
-        path = 'page/sample-page/page.rst'
+        attachments = list(self.api.attachments_by_path(self.PAGE_PATH))
 
-        self.api.page_by_path(path)
-        attachments = list(self.api.attachments_by_path(path))
-
-        self.assert_equal(len(attachments), 0)
+        self.assert_equal([], attachments)
 
     def test_attachment_not_found(self):
 
-        fake_tree_id = '1' * 40
+        fake_tree_id = b'1' * 40
 
         with raises(AttachmentNotFound):
             self.api.attachment(fake_tree_id)
