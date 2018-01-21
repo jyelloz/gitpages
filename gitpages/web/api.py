@@ -18,100 +18,88 @@ _content_disposition_expression = re.compile(
     r'^.*;\s*filename=(.+?)(:?;\s*.*)*$'
 )
 
-
-def _page_info_to_url(self, _external=False):
-    return url_for(
-        '.page_archive_view',
-        year=self.date.year,
-        month=self.date.month,
-        day=self.date.day,
-        slug=self.slug,
-        _external=_external,
-    )
-
-
-def _page_info_to_url_tree(self, tree_id, _external=False):
-    return url_for(
-        '.page_archive_view_ref',
-        tree_id=tree_id,
-        year=self.date.year,
-        month=self.date.month,
-        day=self.date.day,
-        slug=self.slug,
-        _external=_external,
-    )
-
-PageInfo = namedtuple(
+_PageInfo = namedtuple(
     'PageInfo',
     'date slug ref title status blob_id path revision_date revision_slug',
 )
-PageInfo.to_url = _page_info_to_url
-PageInfo.to_url_tree = _page_info_to_url_tree
-
-
-def _page_to_url(self, _external=False):
-    return self.info.to_url(_external=_external)
-
-
-def _page_to_url_tree(self, tree_id, _external=False):
-    return self.info.to_url_tree(tree_id, _external=_external)
-
-
-Page = namedtuple(
-    'Page',
-    'info doc',
-)
-Page.to_url = _page_to_url
-Page.to_url_tree = _page_to_url_tree
-
-
-def _page_attachment_metadata_to_url(self, attachment=True, _external=False):
-    return url_for(
-        '.attachment' if attachment else '.inline_attachment',
-        tree_id=self.attachment_id,
-        _external=_external,
-    )
-
-PageAttachmentMetadata = namedtuple(
+_Page = namedtuple('Page', 'info doc')
+_PageAttachmentMetadata = namedtuple(
     'PageAttachmentMetadata',
     'attachment_id content_type content_disposition content_length',
 )
-PageAttachmentMetadata.to_url = _page_attachment_metadata_to_url
-
-
-def _page_attachment_metadata_filename(self):
-
-    try:
-
-        filename = _content_disposition_expression.match(
-            self.content_disposition
-        ).group(1)
-
-        return filename
-
-    except:
-        return self.attachment_id + '.bin'
-
-PageAttachmentMetadata.filename = _page_attachment_metadata_filename
-
-PageAttachment = namedtuple(
+_PageAttachment = namedtuple(
     'PageAttachment',
     'metadata data',
 )
 
+class PageInfo(_PageInfo):
 
-def _page_attachment_filename(self):
-    return self.metadata.filename()
+    def to_url(self, _external=False):
+        return url_for(
+            '.page_archive_view',
+            year=self.date.year,
+            month=self.date.month,
+            day=self.date.day,
+            slug=self.slug,
+            _external=_external,
+        )
+
+    def to_url_tree(self, tree_id, _external=False):
+        return url_for(
+            '.page_archive_view_ref',
+            tree_id=tree_id,
+            year=self.date.year,
+            month=self.date.month,
+            day=self.date.day,
+            slug=self.slug,
+            _external=_external,
+        )
 
 
-def _page_attachment_to_url(self, attachment=True, _external=False):
-    return self.metadata.to_url(
-        attachment,
-        _external=False,
-    )
+class Page(_Page):
 
-PageAttachment.to_url = _page_attachment_to_url
-PageAttachment.filename = _page_attachment_filename
+    def to_url(self, _external=False):
+        return self.info.to_url(_external=_external)
+
+    def to_url_tree(self, tree_id, _external=False):
+        return self.info.to_url_tree(tree_id, _external=_external)
+
+
+class PageAttachmentMetadata(_PageAttachmentMetadata):
+
+    def to_url(self, attachment=True, _external=False):
+        return url_for(
+            '.attachment' if attachment else '.inline_attachment',
+            tree_id=self.attachment_id,
+            _external=_external,
+        )
+
+
+    def filename(self):
+
+        try:
+
+            filename = _content_disposition_expression.match(
+                self.content_disposition
+            ).group(1)
+
+            return filename
+
+        except:
+            return self.attachment_id + '.bin'
+
+
+class PageAttachment(_PageAttachment):
+
+    def filename(self):
+        return self.metadata.filename()
+
+
+    def to_url(self, attachment=True, _external=False):
+        return self.metadata.to_url(
+            attachment,
+            _external=False,
+        )
 
 
 def statuses_query(status_field_prefix, statuses):
