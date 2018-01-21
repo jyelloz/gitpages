@@ -74,26 +74,24 @@ class PageAttachmentMetadata(_PageAttachmentMetadata):
             _external=_external,
         )
 
-
+    @property
     def filename(self):
 
-        try:
+        match = _content_disposition_expression.match(
+            self.content_disposition
+        )
 
-            filename = _content_disposition_expression.match(
-                self.content_disposition
-            ).group(1)
-
-            return filename
-
-        except:
-            return self.attachment_id + '.bin'
+        return (
+            match.group(1) if match
+            else self.attachment_id + '.bin'
+        )
 
 
 class PageAttachment(_PageAttachment):
 
+    @property
     def filename(self):
-        return self.metadata.filename()
-
+        return self.metadata.filename
 
     def to_url(self, attachment=True, _external=False):
         return self.metadata.to_url(
