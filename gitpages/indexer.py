@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import logging
 from datetime import datetime
 
 from dateutil.parser import parse as parse_date
@@ -15,21 +14,28 @@ from .util.compat import (
 )
 
 
-_log = logging.getLogger(__name__)
+def _makedirs_quiet(path):
+    from os import makedirs, error as _OSError
+    from os.path import isdir
+
+    try:
+        makedirs(path)
+    except _OSError:
+        if not isdir(path):
+            raise
 
 
 def get_index(index_path, index_name, schema):
-
-    from os import makedirs, error as OSError
-    from os.path import isdir
+    """
+    :type index_path: str
+    :type index_name: str
+    :type schema: whoosh.fields.Schema
+    :rtype: whoosh.index.Index
+    """
 
     from whoosh import index
 
-    try:
-        makedirs(index_path)
-    except OSError:
-        if not isdir(index_path):
-            raise
+    _makedirs_quiet(index_path)
 
     if index.exists_in(index_path, index_name):
         return index.open_dir(
@@ -44,9 +50,8 @@ def get_index(index_path, index_name, schema):
     )
 
 
-def write_page(repo, writer, path, page, attachments):
+def write_page(writer, path, page, attachments):
     """
-    :type repo: dulwich.repo.BaseRepo
     :type writer: whoosh.writing.IndexWriter
     :type path: six.text_type
     :type page: dulwich.objects.Blob
@@ -76,14 +81,19 @@ def write_page(repo, writer, path, page, attachments):
 
 
 def write_revision(repo, writer, commit, path):
+    """
+    :type repo: dulwich.repo.BaseRepo
+    :type writer: whoosh.writing.IndexWriter
+    :type commit: dulwich.objects.Commit
+    """
 
     from posixpath import dirname
 
-    path_bytes = git_storage._to_bytes(path)
+    path_bytes = text_to_bytes(path)
 
     tree_id = commit.tree
     tree = repo[tree_id]
-    mode, blob_id = tree.lookup_path(
+    _mode, blob_id = tree.lookup_path(
         repo.get_object,
         path_bytes,
     )
@@ -108,9 +118,9 @@ def write_revision(repo, writer, commit, path):
     status = docinfo['status']
 
     page_tree_path = dirname(path)
-    page_tree_path_bytes = git_storage._to_bytes(page_tree_path)
+    page_tree_path_bytes = text_to_bytes(page_tree_path)
 
-    page_tree_mode, page_tree_id = tree.lookup_path(
+    _page_tree_mode, page_tree_id = tree.lookup_path(
         repo.get_object,
         page_tree_path_bytes,
     )
@@ -196,7 +206,7 @@ def build_hybrid_index(index, repo, ref=b'HEAD'):
 
         from posixpath import dirname
 
-        parent_path_bytes = git_storage._to_bytes(dirname(path))
+        parent_path_bytes = text_to_bytes(dirname(path))
 
         return Walker(
             store=repo.object_store,
@@ -211,25 +221,17 @@ def build_hybrid_index(index, repo, ref=b'HEAD'):
 
     pages_data = git_storage.load_pages_with_attachments(repo, pages)
 
-    w = index.writer()
-
-    try:
+    with index.writer() as writer:
 
         for path, page, attachments in pages_data:
 
-            with w.group():
+            revisions = get_revisions(path)
 
-                write_page(repo, w, path, page, attachments)
-                revisions = get_revisions(path)
+            with writer.group():
+
+                write_page(writer, path, page, attachments)
                 for revision in revisions:
-                    write_revision(repo, w, revision.commit, path)
-
-        w.commit(optimize=True)
-
-    except:
-
-        w.cancel()
-        raise
+                    write_revision(repo, writer, revision.commit, path)
 
 
 def read_page_rst(page_rst):
@@ -243,7 +245,7 @@ def get_title(doctree):
 
     return next(
         (c for c in doctree.children
-         if c.tagname is 'title')
+         if c.tagname == 'title')
     ).astext()
 
 
@@ -264,18 +266,18 @@ def get_docinfo_as_dict(doctree):
 
         docinfo_dict = {}
 
-        for c in docinfo.children:
-            if c.tagname is 'field':
-                name, value = field_to_tuple(c)
+        for child in docinfo.children:
+            if child.tagname == 'field':
+                name, value = field_to_tuple(child)
                 docinfo_dict[name] = value
             else:
-                docinfo_dict[c.tagname] = c.astext()
+                docinfo_dict[child.tagname] = child.astext()
 
         return docinfo_dict
 
     docinfo = next(
         (c for c in doctree.children
-         if c.tagname is 'docinfo')
+         if c.tagname == 'docinfo')
     )
 
     return docinfo_as_dict(docinfo)
