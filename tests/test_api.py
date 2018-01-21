@@ -2,7 +2,7 @@
 
 from six import print_ as pr
 
-from nose.tools import raises
+from pytest import raises
 
 from gitpages.web.exceptions import PageNotFound, AttachmentNotFound
 
@@ -16,10 +16,9 @@ class APITestCase(GitPagesTestcase):
         sample_page = self.api.page_by_path('page/sample-page/page.rst')
         self.assert_true(sample_page)
 
-    @raises(PageNotFound)
     def test_page_by_path_not_found(self):
-
-        self.api.page_by_path('page/non-existent-page/page.rst')
+        with raises(PageNotFound):
+            self.api.page_by_path('page/non-existent-page/page.rst')
 
     def test_attachments_by_path(self):
 
@@ -39,12 +38,12 @@ class APITestCase(GitPagesTestcase):
 
         self.assert_equal(len(attachments), 0)
 
-    @raises(AttachmentNotFound)
     def test_attachment_not_found(self):
 
         fake_tree_id = '1' * 40
 
-        self.api.attachment(fake_tree_id)
+        with raises(AttachmentNotFound):
+            self.api.attachment(fake_tree_id)
 
     def test_index(self):
 
