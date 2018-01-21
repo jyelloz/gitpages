@@ -43,7 +43,46 @@ Sample Page With Attachments
 This is a sample page with some attachments.
 """
 
+_ATTACH_1 = b'attach.1'
+_ATTACH_1_DATA = b'attach.1 data\n'
+_ATTACH_1_METADATA_RST = b"""\
+:content-disposition: attachment; filename=%s
+:content-type: text/plain
+""" % _ATTACH_1
+
 _PAGE_RST = b'page.rst'
+_METADATA_RST = b'metadata.rst'
+_DATA = b'data'
+
+
+def _add_attachment(store, attachments_tree, filename, metadata, data):
+
+    metadata_blob = Blob.from_string(metadata)
+    data_blob = Blob.from_string(data)
+
+    store.add_object(metadata_blob)
+    store.add_object(data_blob)
+
+    attachment_tree = Tree()
+    attachment_tree.add(
+        _METADATA_RST,
+        0o100644,
+        metadata_blob.id,
+    )
+    attachment_tree.add(
+        _DATA,
+        0o100644,
+        data_blob.id,
+    )
+    store.add_object(attachment_tree)
+
+    attachments_tree.add(
+        filename,
+        0o100755,
+        attachment_tree.id,
+    )
+    return attachments_tree
+
 
 class GitPagesTestcase(unittest.TestCase):
 
@@ -80,9 +119,22 @@ class GitPagesTestcase(unittest.TestCase):
         sample_page_tree.add(_PAGE_RST, 0o100644, sample_page_rst_blob.id)
         store.add_object(sample_page_tree)
 
+        attach_tree = Tree()
+        _add_attachment(
+            store,
+            attach_tree,
+            _ATTACH_1,
+            _ATTACH_1_METADATA_RST,
+            _ATTACH_1_DATA
+        )
+        store.add_object(attach_tree)
+
         sample_page_with_attachments_tree = Tree()
         sample_page_with_attachments_tree.add(
             _PAGE_RST, 0o100644, sample_page_with_attachments_rst_blob.id
+        )
+        sample_page_with_attachments_tree.add(
+            b'attachment', 0o100755, attach_tree.id
         )
         store.add_object(sample_page_with_attachments_tree)
 
