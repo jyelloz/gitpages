@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import itertools
 import functools
 import posixpath
 from collections import namedtuple
@@ -91,21 +90,14 @@ class PageAttachment(_PageAttachmentBase):
         return super(PageAttachment, self).metadata()
 
 
-def iterable_nth(iterable, n, default=None):
-    return next(itertools.islice(iterable, n, None), default)
-
-
-def get_pages_tree(repository, ref=b'HEAD', commit=None):
+def get_pages_tree(repository, ref=b'HEAD'):
     """
     :type repository: dulwich.repo.BaseRepo
     :rtype: dulwich.objects.Tree
     """
 
-    if commit is None:
-        ref_commit = repository[repository.refs[ref]]
-        root = repository[ref_commit.tree]
-    else:
-        root = repository[commit.tree]
+    ref_commit = repository[repository.refs[ref]]
+    root = repository[ref_commit.tree]
 
     return repository[root[PAGES_TREE_BYTES][1]]
 
