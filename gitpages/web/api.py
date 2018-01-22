@@ -158,6 +158,9 @@ class GitPages(object):
 
     @classmethod
     def _load_page(cls, result, parts):
+        """
+        :rtype: Page
+        """
         return Page(
             info=cls._load_page_info(result),
             doc=parts,
@@ -196,9 +199,12 @@ class GitPages(object):
         )
 
     def page_by_path(self, path):
+        """
+        :rtype: Page
+        """
 
         results = self._searcher.search(
-            Term('kind', 'page') & Term('page_path', path),
+            Term(u'kind', u'page') & Term(u'page_path', path),
             limit=1,
         )
 
@@ -363,8 +369,8 @@ class GitPages(object):
         latest = earliest + self._max_timedelta
 
         page_kind, attachment_kind = (
-            ('page', 'page-attachment') if tree_id is None
-            else ('revision', 'revision-attachment')
+            (u'page', u'page-attachment') if tree_id is None
+            else (u'revision', u'revision-attachment')
         )
 
         statuses_clause = (
@@ -373,7 +379,7 @@ class GitPages(object):
             else Every()
         )
 
-        pq = Term('kind', page_kind)
+        pq = Term(u'kind', page_kind)
         cq = And([
             Term(page_kind + '_slug', slug),
             DateRange(
@@ -407,8 +413,8 @@ class GitPages(object):
     def attachments_by_path(self, path, tree_id=None):
 
         page_kind, attachment_kind = (
-            ('page', 'page-attachment') if tree_id is None
-            else ('revision', 'revision-attachment')
+            (u'page', u'page-attachment') if tree_id is None
+            else (u'revision', u'revision-attachment')
         )
 
         pq = Term('kind', page_kind)
@@ -416,7 +422,7 @@ class GitPages(object):
 
         q = And([
             NestedChildren(pq, cq),
-            Term('kind', attachment_kind),
+            Term(u'kind', attachment_kind),
         ])
 
         results = self._searcher.search(q)
