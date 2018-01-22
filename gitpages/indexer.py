@@ -14,7 +14,7 @@ from .util.compat import (
 )
 
 
-def _makedirs_quiet(path):
+def makedirs_quiet(path):
     from os import makedirs, error as _OSError
     from os.path import isdir
 
@@ -35,7 +35,7 @@ def get_index(index_path, index_name, schema):
 
     from whoosh import index
 
-    _makedirs_quiet(index_path)
+    makedirs_quiet(index_path)
 
     if index.exists_in(index_path, index_name):
         return index.open_dir(
