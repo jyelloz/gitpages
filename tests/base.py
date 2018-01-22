@@ -26,6 +26,7 @@ Sample Page
 This is a sample page.
 
 Here is some ``inline literal text``.
+Here is some :strikethrough:`strikethrough text`.
 
 """
 
