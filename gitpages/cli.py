@@ -58,8 +58,8 @@ def run_server(app, host, port, debug):
 @click.command('shell')
 @click.argument(
     'shell', metavar='[SHELL]',
-    type=click.Choice(['bpython', 'ipython', 'bpython-urwid', 'python']),
-    default='bpython',
+    type=click.Choice(['ptpython', 'python']),
+    default='ptpython',
 )
 @click.pass_obj
 def shell(app, shell):
@@ -68,9 +68,7 @@ def shell(app, shell):
     from flask import request, session, g, url_for
 
     shells = {
-        'ipython': _ipython,
-        'bpython': _bpython,
-        'bpython-urwid': _bpython_urwid,
+        'ptpython': _ptpython,
         'python': _python,
     }
 
@@ -86,51 +84,15 @@ def shell(app, shell):
         shells[shell](None, context)()
 
 
-def _bpython_urwid(banner, context):
+def _ptpython(banner, context):
 
-    from bpython.urwid import main
-
-    return partial(
-        main,
-        args=[],
-        banner=banner,
-        locals_=context,
-    )
-
-
-def _bpython(banner, context):
-
-    from bpython.curtsies import main
+    from ptpython.repl import embed
 
     return partial(
-        main,
-        args=[],
-        banner=banner,
-        locals_=context,
+        embed,
+        globals=dict(),
+        locals=context,
     )
-
-
-def _ipython(banner, context):
-
-    try:
-
-        from IPython.Shell import IPShellEmbed
-
-        return partial(
-            IPShellEmbed(banner=banner),
-            global_ns=dict(),
-            local_ns=context,
-        )
-
-    except ImportError:
-
-        from IPython.terminal.embed import InteractiveShellEmbed
-
-        return partial(
-            InteractiveShellEmbed(banner1=banner),
-            global_ns=dict(),
-            local_ns=context,
-        )
 
 
 def _python(banner, context):
