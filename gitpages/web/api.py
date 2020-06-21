@@ -417,8 +417,12 @@ class GitPages(object):
             else (u'revision', u'revision-attachment')
         )
 
-        pq = Term('kind', page_kind)
-        cq = Term(page_kind + '_path', path)
+        pq = (
+            Term(u'kind', page_kind) if tree_id is None
+            else
+            Term(u'kind', page_kind) & Term(page_kind + '_tree_id', tree_id)
+        )
+        cq = Term(page_kind + u'_path', path)
 
         q = And([
             NestedChildren(pq, cq),
