@@ -28,6 +28,7 @@ setup(
         'python-dateutil',
         'pytz',
         'cachelib',
+        'feedgen',
         'typogrify',
         'Unidecode',
         'Whoosh>=2.5.4',
