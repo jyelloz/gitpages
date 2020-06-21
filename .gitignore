@@ -6,3 +6,4 @@
 /cover
 /.tox
 /.eggs
+/Pipfile.lock
