@@ -31,7 +31,7 @@ setup(
         'feedgen',
         'typogrify',
         'Unidecode',
-        'Whoosh>=2.5.4',
+        'Whoosh',
         'click',
         'six',
     ],
