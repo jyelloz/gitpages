@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import cachelib
 from pytz import timezone
-from werkzeug.contrib import cache
 
 from gitpages.web.application import create
 
@@ -27,7 +27,7 @@ class UITest(GitPagesTestcase):
             GITPAGES_DEFAULT_REF='refs/heads/master',
             GITPAGES_ALLOWED_STATUSES=[u'published', u'draft'],
             GITPAGES_INDEX=get_ram_index,
-            CACHE=cache.NullCache(),
+            CACHE=cachelib.NullCache(),
             DEBUG=True,
         )
 

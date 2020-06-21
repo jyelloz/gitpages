@@ -27,6 +27,7 @@ setup(
         'Pygments',
         'python-dateutil',
         'pytz',
+        'cachelib',
         'typogrify',
         'Unidecode',
         'Whoosh>=2.5.4',
