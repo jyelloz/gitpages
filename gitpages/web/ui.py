@@ -15,9 +15,9 @@ from werkzeug.exceptions import NotFound
 from werkzeug.contrib.atom import AtomFeed
 
 from .exceptions import PageNotFound, AttachmentNotFound
-from .schema import DateRevisionHybrid
 from .api import GitPages
-from ..util import compat
+from ..schema import DateRevisionHybrid
+from ..util import compat, inlineify
 
 
 _log = logging.getLogger(__name__)
@@ -321,8 +321,6 @@ def date_range_index(earliest, latest, ref, page_number):
 
 
 def attachment(tree_id, inline):
-
-    from ..util import inlineify
 
     try:
         attachment = g.gitpages.attachment(tree_id)

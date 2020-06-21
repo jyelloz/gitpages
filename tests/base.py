@@ -8,8 +8,8 @@ from dulwich.objects import Blob, Commit, Tree
 from whoosh.filedb.filestore import RamStorage
 
 from gitpages.indexer import build_hybrid_index
+from gitpages.schema import DateRevisionHybrid
 from gitpages.web.api import GitPages
-from gitpages.web.schema import DateRevisionHybrid
 
 
 _SAMPLE_PAGE_RST = b"""\
