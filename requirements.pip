@@ -1,5 +1,0 @@
-pytest
-coverage
-bpython
-
--e .
