@@ -2,13 +2,14 @@ import click
 
 from functools import partial
 
+from whoosh.query import Every
+
 
 @click.command('build-index')
 @click.pass_obj
 def build_index(app):
     """(re)build GitPages index"""
 
-    from whoosh.query import Every
     from .indexer import build_hybrid_index
     from .web import ui
 

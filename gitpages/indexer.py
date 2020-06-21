@@ -1,12 +1,26 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
+from posixpath import dirname
+from os import makedirs, error as OSError
+from os.path import isdir
+
+from typing import Iterable
 
 from dateutil.parser import parse as parse_date
 from dateutil.tz import tzoffset
 from dulwich.walk import Walker
+from dulwich.repo import BaseRepo
+from dulwich.objects import Blob, Commit
+
+from whoosh import index
+from whoosh.fields import Schema
+from whoosh.index import Index
+from whoosh.writing import IndexWriter
+
 
 from .storage import git as git_storage
+from .storage.git import PageAttachment
 from .util import slugify
 from .util.compat import (
     _bytes_to_text as bytes_to_text,
@@ -15,25 +29,15 @@ from .util.compat import (
 
 
 def makedirs_quiet(path):
-    from os import makedirs, error as _OSError
-    from os.path import isdir
 
     try:
         makedirs(path)
-    except _OSError:
+    except OSError:
         if not isdir(path):
             raise
 
 
-def get_index(index_path, index_name, schema):
-    """
-    :type index_path: str
-    :type index_name: str
-    :type schema: whoosh.fields.Schema
-    :rtype: whoosh.index.Index
-    """
-
-    from whoosh import index
+def get_index(index_path: str, index_name: str, schema: Schema) -> Index:
 
     makedirs_quiet(index_path)
 
@@ -50,12 +54,12 @@ def get_index(index_path, index_name, schema):
     )
 
 
-def write_page(writer, path, page, attachments):
-    """
-    :type writer: whoosh.writing.IndexWriter
-    :type path: six.text_type
-    :type page: dulwich.objects.Blob
-    """
+def write_page(
+        writer: IndexWriter,
+        path: str,
+        page: Blob,
+        attachments: Iterable,
+):
 
     doctree = read_page_rst(page.data)
     title = get_title(doctree)
@@ -82,14 +86,12 @@ def write_page(writer, path, page, attachments):
         write_page_attachment(writer, attachment)
 
 
-def write_revision(repo, writer, commit, path):
-    """
-    :type repo: dulwich.repo.BaseRepo
-    :type writer: whoosh.writing.IndexWriter
-    :type commit: dulwich.objects.Commit
-    """
-
-    from posixpath import dirname
+def write_revision(
+        repo: BaseRepo,
+        writer: IndexWriter,
+        commit: Commit,
+        path: str,
+):
 
     path_bytes = text_to_bytes(path)
 
@@ -163,12 +165,11 @@ def write_revision_attachment(writer, attachment):
     _write_attachment(writer, attachment, kind=u'revision-attachment')
 
 
-def _write_attachment(writer, attachment, kind):
-    """
-    :type writer: whoosh.writing.IndexWriter
-    :type attachment: gitpages.storage.git.PageAttachment
-    :type kind: six.text_type
-    """
+def _write_attachment(
+        writer: IndexWriter,
+        attachment: PageAttachment,
+        kind: str,
+):
 
     attachment_tree_id = attachment.tree_id_text
     metadata_blob_id = attachment.metadata_blob_id_text
@@ -197,16 +198,11 @@ def _write_attachment(writer, attachment, kind):
     )
 
 
-def build_hybrid_index(index, repo, ref=b'HEAD'):
-    """
-    :type index: whoosh.index.Index
-    :type repo: dulwich.repo.BaseRepo
-    :type ref: six.binary_type
-    """
+def build_hybrid_index(index: Index, repo: BaseRepo, ref: bytes=b'HEAD'):
 
     head = repo.refs[ref]
 
-    def get_revisions(path):
+    def get_revisions(path) -> Walker:
 
         from posixpath import dirname
 
@@ -245,7 +241,7 @@ def read_page_rst(page_rst):
     return publish_doctree(page_rst)
 
 
-def get_title(doctree):
+def get_title(doctree) -> str:
 
     return next(
         (c for c in doctree.children
