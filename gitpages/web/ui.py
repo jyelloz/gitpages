@@ -365,14 +365,17 @@ def atom_feed():
         doc = page.doc()
 
         utc_date = page.info.date.astimezone(pytz.utc)
+        title = doc['title']
         url = urljoin(request.url_root, page.to_url())
 
         entry = feed.add_entry()
-        entry.title(doc['title'])
+        entry.title(title)
         entry.id(url)
         entry.updated(utc_date)
         entry.pubdate(utc_date)
-        entry.content(doc['body'], url, type='CDATA')
+        entry.link(href=url, rel='alternate')
+        entry.source(url, title)
+        entry.content(doc['body'], type='html')
 
     xml = feed.atom_str()
 
