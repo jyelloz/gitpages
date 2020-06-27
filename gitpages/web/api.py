@@ -215,7 +215,7 @@ class GitPages(object):
     def page_by_path(self, path) -> Page:
 
         results = self._searcher.search(
-            Term(u'kind', u'page') & Term(u'page_path', path),
+            Term('kind', 'page') & Term('page_path', path),
             limit=1,
         )
 
@@ -380,8 +380,8 @@ class GitPages(object):
         latest = earliest + self._max_timedelta
 
         page_kind, attachment_kind = (
-            (u'page', u'page-attachment') if tree_id is None
-            else (u'revision', u'revision-attachment')
+            ('page', 'page-attachment') if tree_id is None
+            else ('revision', 'revision-attachment')
         )
 
         statuses_clause = (
@@ -390,7 +390,7 @@ class GitPages(object):
             else Every()
         )
 
-        pq = Term(u'kind', page_kind)
+        pq = Term('kind', page_kind)
         cq = And([
             Term(page_kind + '_slug', slug),
             DateRange(
@@ -428,20 +428,20 @@ class GitPages(object):
     ) -> Iterable[PageAttachment]:
 
         page_kind, attachment_kind = (
-            (u'page', u'page-attachment') if tree_id is None
-            else (u'revision', u'revision-attachment')
+            ('page', 'page-attachment') if tree_id is None
+            else ('revision', 'revision-attachment')
         )
 
         pq = (
-            Term(u'kind', page_kind) if tree_id is None
+            Term('kind', page_kind) if tree_id is None
             else
-            Term(u'kind', page_kind) & Term(page_kind + '_tree_id', tree_id)
+            Term('kind', page_kind) & Term(page_kind + '_tree_id', tree_id)
         )
-        cq = Term(page_kind + u'_path', path)
+        cq = Term(page_kind + '_path', path)
 
         q = And([
             NestedChildren(pq, cq),
-            Term(u'kind', attachment_kind),
+            Term('kind', attachment_kind),
         ])
 
         results = self._searcher.search(q)
