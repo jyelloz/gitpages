@@ -3,8 +3,12 @@
 import functools
 import posixpath
 from collections import namedtuple
+from typing import Any, ForwardRef, Iterable, Generator, NamedTuple
 
 import six
+
+from dulwich.repo import BaseRepo
+from dulwich.objects import Blob, Tree, TreeEntry
 
 from ..util.compat import (
     _text_to_bytes as _to_bytes,
@@ -26,34 +30,16 @@ ATTACHMENTS_TREE, ATTACHMENT_METADATA_RST, ATTACHMENT_DATA = (
 )
 
 
-PageRef = namedtuple(
-    'PageRef',
-    [
-        'path',
-        'tree',
-        'entry',
-    ],
-)
+class PageRef(NamedTuple):
+    path: str
+    tree: Tree
+    entry: TreeEntry
 
 
-_PageBase = namedtuple(
-    'Page',
-    [
-        'path',
-        'page',
-        'attachments',
-    ],
-)
-
-
-class Page(_PageBase):
-
-    @property
-    def attachments(self):
-        '''
-        :return: iterable(PageAttachment)
-        '''
-        return super(Page, self).attachments
+class Page(NamedTuple):
+    path: str
+    page: Any
+    attachments: Iterable[ForwardRef('PageAttachment')]
 
 
 _PageAttachmentBase = namedtuple(
@@ -145,11 +131,7 @@ def load_pages_with_attachments(repository, page_trees_with_rst):
     )
 
 
-def find_page_rst_entry(page_tree):
-    """
-    :type page_tree: dulwich.objects.Tree
-    :rtype: dulwich.objects.TreeEntry
-    """
+def find_page_rst_entry(page_tree: Tree) -> TreeEntry:
 
     return next(
         i for i in six.iteritems(page_tree)
@@ -157,28 +139,18 @@ def find_page_rst_entry(page_tree):
     )
 
 
-def load_page_data(repository, page_rst_entry):
-    """
-    :type repository: dulwich.repo.BaseRepo
-    :type page_rst_entry: dulwich.objects.TreeEntry
-    :rtype: dulwich.objects.Blob
-    """
-
+def load_page_data(repository: BaseRepo, page_rst_entry: TreeEntry) -> Blob:
     return repository[page_rst_entry.sha]
 
 
-def load_page_attachments(repository, page_tree):
-    """
-    :type repository: dulwich.repo.BaseRepo
-    :type page_tree: dulwich.objects.Tree
-    :rtype: iterable(PageAttachment)
-    """
+def load_page_attachments(
+        repository: BaseRepo,
+        page_tree: Tree,
+) -> Generator[PageAttachment, None, None]:
 
-    def load_page_attachment(attachment_tree):
-        """
-        :type attachment_tree: dulwich.objects.Tree
-        :rtype: PageAttachment
-        """
+    def load_page_attachment(
+            attachment_tree: Tree
+    ) -> PageAttachment:
 
         data = next(
             i for i in six.iteritems(attachment_tree)
