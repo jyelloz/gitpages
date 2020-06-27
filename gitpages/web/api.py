@@ -4,8 +4,7 @@ import logging
 import re
 from datetime import datetime, timedelta
 from functools import partial
-from collections import namedtuple
-from typing import Callable, Iterable, NamedTuple, Optional
+from typing import Any, Callable, Iterable, Mapping, NamedTuple, Optional
 
 from flask import url_for
 from whoosh.query import Term, DateRange, And, Or, NestedChildren, Every
@@ -22,8 +21,10 @@ _content_disposition_expression = re.compile(
     r'^.*;\s*filename=(.+?)(:?;\s*.*)*$'
 )
 
-_Page = namedtuple('Page', 'info doc')
+DocutilsParts = Mapping[str, Any]
+LazyDocutilsParts = Callable[[], DocutilsParts]
 
+LazyBlob = Callable[[], Blob]
 
 class PageInfo(NamedTuple):
 
@@ -59,7 +60,10 @@ class PageInfo(NamedTuple):
         )
 
 
-class Page(_Page):
+class Page(NamedTuple):
+
+    info: PageInfo
+    doc: LazyDocutilsParts
 
     def to_url(self, _external=False):
         return self.info.to_url(_external=_external)
@@ -98,10 +102,10 @@ class PageAttachmentMetadata(NamedTuple):
 class PageAttachment(NamedTuple):
 
     metadata: PageAttachmentMetadata
-    data: Callable
+    data: LazyBlob
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         return self.metadata.filename
 
     def to_url(self, attachment=True, _external=False):
@@ -370,7 +374,7 @@ class GitPages(object):
         slug,
         tree_id=None,
         statuses=_default_statuses
-    ):
+    ) -> Iterable[PageAttachment]:
 
         earliest = datetime(date.year, date.month, date.day)
         latest = earliest + self._max_timedelta
@@ -601,7 +605,7 @@ class GitPages(object):
 
 
 @cached(key='page/%s', key_builder=lambda blob: _bytes_to_text(blob.id))
-def render_page_content(blob: Blob):
+def render_page_content(blob: Blob) -> DocutilsParts:
 
     from docutils.core import publish_parts
     from gitpages.web.rst import GitPagesWriter
