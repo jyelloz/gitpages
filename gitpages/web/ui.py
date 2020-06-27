@@ -2,7 +2,7 @@
 
 import logging
 from datetime import datetime
-from six.moves.urllib.parse import urljoin
+from urllib.parse import urljoin
 
 import pytz
 
