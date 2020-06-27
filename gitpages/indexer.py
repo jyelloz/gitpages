@@ -71,7 +71,7 @@ def write_page(
     blob_id = bytes_to_text(page.id)
 
     writer.add_document(
-        kind=u'page',
+        kind='page',
         page_date=date,
         page_slug=slug,
         page_title=title,
@@ -80,7 +80,7 @@ def write_page(
         page_blob_id=blob_id,
     )
 
-    writer.add_document(kind=u'page-dummy-child')
+    writer.add_document(kind='page-dummy-child')
 
     for attachment in attachments:
         write_page_attachment(writer, attachment)
@@ -135,7 +135,7 @@ def write_revision(
     with writer.group():
 
         writer.add_document(
-            kind=u'revision',
+            kind='revision',
             revision_date=date,
             revision_slug=slug,
             revision_title=title,
@@ -151,18 +151,18 @@ def write_revision(
             revision_message=bytes_to_text(commit.message),
         )
 
-        writer.add_document(kind=u'revision-dummy-child')
+        writer.add_document(kind='revision-dummy-child')
 
         for attachment in attachments:
             write_revision_attachment(writer, attachment)
 
 
 def write_page_attachment(writer, attachment):
-    _write_attachment(writer, attachment, kind=u'page-attachment')
+    _write_attachment(writer, attachment, kind='page-attachment')
 
 
 def write_revision_attachment(writer, attachment):
-    _write_attachment(writer, attachment, kind=u'revision-attachment')
+    _write_attachment(writer, attachment, kind='revision-attachment')
 
 
 def _write_attachment(
@@ -179,12 +179,12 @@ def _write_attachment(
 
     content_disposition = docinfo.get(
         'content-disposition',
-        u'inline',
+        'inline',
     )
     content_length = attachment.data.raw_length()
     content_type = docinfo.get(
         'content-type',
-        u'application/octet-stream',
+        'application/octet-stream',
     )
 
     writer.add_document(
