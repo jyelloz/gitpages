@@ -23,10 +23,6 @@ _content_disposition_expression = re.compile(
 )
 
 _Page = namedtuple('Page', 'info doc')
-_PageAttachmentMetadata = namedtuple(
-    'PageAttachmentMetadata',
-    'attachment_id content_type content_disposition content_length',
-)
 
 
 class PageInfo(NamedTuple):
@@ -72,7 +68,12 @@ class Page(_Page):
         return self.info.to_url_tree(tree_id, _external=_external)
 
 
-class PageAttachmentMetadata(_PageAttachmentMetadata):
+class PageAttachmentMetadata(NamedTuple):
+
+    attachment_id: str
+    content_type: str
+    content_disposition: str
+    content_length: int
 
     def to_url(self, attachment=True, _external=False):
         return url_for(
