@@ -66,6 +66,7 @@ def shell(app, shell):
     """ run an interactive python shell """
 
     from flask import request, session, g, url_for
+    from .web import ui
 
     shells = {
         'ptpython': _ptpython,
@@ -81,6 +82,8 @@ def shell(app, shell):
     )
 
     with app.test_request_context():
+        ui.setup_gitpages_application()
+        ui.setup_gitpages()
         shells[shell](None, context)()
 
 
