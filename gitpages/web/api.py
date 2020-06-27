@@ -11,6 +11,7 @@ from whoosh.query import Term, DateRange, And, Or, NestedChildren, Every
 
 from .exceptions import PageNotFound, AttachmentNotFound
 from ..util import cached
+from ..util.compat import _bytes_to_text
 
 
 _log = logging.getLogger(__name__)
@@ -589,7 +590,7 @@ class GitPages(object):
         pass
 
 
-@cached(key='page/%s', key_builder=lambda blob: blob.id.decode('utf8'))
+@cached(key='page/%s', key_builder=lambda blob: _bytes_to_text(blob.id))
 def render_page_content(blob):
 
     from docutils.core import publish_parts
