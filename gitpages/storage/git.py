@@ -2,7 +2,7 @@
 
 import functools
 import posixpath
-from typing import Any, Callable, Iterable, Generator, NamedTuple
+from typing import Callable, Iterable, Generator, NamedTuple
 
 from dulwich.repo import BaseRepo
 from dulwich.objects import Blob, Tree, TreeEntry
@@ -12,6 +12,8 @@ from ..util.compat import (
     _bytes_to_text as _from_bytes,
 )
 
+
+LazyBlob = Callable[[], Blob]
 
 PAGES_TREE, PAGE_RST = (
     u'page',
@@ -33,7 +35,7 @@ class PageAttachment(NamedTuple):
     blob_id: bytes
     metadata_blob_id: bytes
 
-    data_callable: Callable
+    data_callable: LazyBlob
     metadata_callable: Callable
 
     @property
