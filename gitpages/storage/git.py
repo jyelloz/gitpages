@@ -2,8 +2,7 @@
 
 import functools
 import posixpath
-from collections import namedtuple
-from typing import Any, ForwardRef, Iterable, Generator, NamedTuple
+from typing import Any, Callable, Iterable, Generator, NamedTuple
 
 import six
 
@@ -30,6 +29,36 @@ ATTACHMENTS_TREE, ATTACHMENT_METADATA_RST, ATTACHMENT_DATA = (
 )
 
 
+class PageAttachment(NamedTuple):
+
+    tree_id: bytes
+    blob_id: bytes
+    metadata_blob_id: bytes
+
+    data_callable: Callable
+    metadata_callable: Callable
+
+    @property
+    def tree_id_text(self) -> str:
+        return _from_bytes(self.tree_id)
+
+    @property
+    def blob_id_text(self) -> str:
+        return _from_bytes(self.blob_id)
+
+    @property
+    def metadata_blob_id_text(self) -> str:
+        return _from_bytes(self.metadata_blob_id)
+
+    @property
+    def data(self):
+        return self.data_callable()
+
+    @property
+    def metadata(self):
+        return self.metadata_callable()
+
+
 class PageRef(NamedTuple):
     path: str
     tree: Tree
@@ -39,48 +68,13 @@ class PageRef(NamedTuple):
 class Page(NamedTuple):
     path: str
     page: Any
-    attachments: Iterable[ForwardRef('PageAttachment')]
+    attachments: Iterable[PageAttachment]
 
 
-_PageAttachmentBase = namedtuple(
-    'PageAttachment',
-    [
-        'tree_id',
-        'blob_id',
-        'metadata_blob_id',
-        'data',
-        'metadata',
-    ],
-)
-
-class PageAttachment(_PageAttachmentBase):
-
-    @property
-    def tree_id_text(self):
-        return _from_bytes(self.tree_id)
-
-    @property
-    def blob_id_text(self):
-        return _from_bytes(self.blob_id)
-
-    @property
-    def metadata_blob_id_text(self):
-        return _from_bytes(self.metadata_blob_id)
-
-    @property
-    def data(self):
-        return super(PageAttachment, self).data()
-
-    @property
-    def metadata(self):
-        return super(PageAttachment, self).metadata()
-
-
-def get_pages_tree(repository, ref=b'HEAD'):
-    """
-    :type repository: dulwich.repo.BaseRepo
-    :rtype: dulwich.objects.Tree
-    """
+def get_pages_tree(
+        repository: BaseRepo,
+        ref: bytes=b'HEAD',
+) -> Tree:
 
     ref_commit = repository[repository.refs[ref]]
     root = repository[ref_commit.tree]
@@ -88,10 +82,11 @@ def get_pages_tree(repository, ref=b'HEAD'):
     return repository[root[PAGES_TREE_BYTES][1]]
 
 
-def find_pages(repository, pages_tree, prefix=PAGES_TREE):
-    """
-    :rtype: list(PageRef)
-    """
+def find_pages(
+        repository: BaseRepo,
+        pages_tree: Tree,
+        prefix=PAGES_TREE,
+) -> Iterable[PageRef]:
 
     page_entries = six.iteritems(pages_tree)
 
@@ -115,27 +110,23 @@ def find_pages(repository, pages_tree, prefix=PAGES_TREE):
     )
 
 
-def load_pages_with_attachments(repository, page_trees_with_rst):
-    """
-    :type repository: dulwich.repo.BaseRepo
-    :rtype: list(Page)
-    """
-
-    return (
-        Page(
+def load_pages_with_attachments(
+        repository: BaseRepo,
+        page_trees_with_rst,
+) -> Generator[Page, None, None]:
+    for path, page_tree, page_rst_entry in page_trees_with_rst:
+        yield Page(
             path,
             load_page_data(repository, page_rst_entry),
             load_page_attachments(repository, page_tree),
         )
-        for (path, page_tree, page_rst_entry) in page_trees_with_rst
-    )
 
 
 def find_page_rst_entry(page_tree: Tree) -> TreeEntry:
 
     return next(
-        i for i in six.iteritems(page_tree)
-        if _from_bytes(i.path) == PAGE_RST
+        i for i in page_tree.items()
+        if i.path == PAGE_RST_BYTES
     )
 
 
@@ -146,18 +137,16 @@ def load_page_data(repository: BaseRepo, page_rst_entry: TreeEntry) -> Blob:
 def load_page_attachments(
         repository: BaseRepo,
         page_tree: Tree,
-) -> Generator[PageAttachment, None, None]:
+) -> Iterable[PageAttachment]:
 
-    def load_page_attachment(
-            attachment_tree: Tree
-    ) -> PageAttachment:
+    def load_page_attachment(attachment_tree: Tree) -> PageAttachment:
 
         data = next(
-            i for i in six.iteritems(attachment_tree)
+            i for i in attachment_tree.items()
             if i.path == ATTACHMENT_DATA
         )
         metadata_rst = next(
-            i for i in six.iteritems(attachment_tree)
+            i for i in attachment_tree.items()
             if i.path == ATTACHMENT_METADATA_RST
         )
         data_blob_id = data.sha
