@@ -9,7 +9,7 @@ from .converters import GitRefConverter, UuidConverter
 
 
 @failsafe
-def create(*args, **kwargs):
+def create(*args, **kwargs) -> Flask:
 
     application = Flask(__name__, *args, **kwargs)
 
@@ -18,7 +18,7 @@ def create(*args, **kwargs):
     return application
 
 
-def register_gitpages_blueprint(application):
+def register_gitpages_blueprint(application: Flask) -> Flask:
 
     from . import ui
 
