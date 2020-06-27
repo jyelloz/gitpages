@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from six.moves.urllib.parse import quote_plus, unquote_plus
-import six
 from uuid import UUID
 
 from werkzeug.routing import BaseConverter
@@ -28,4 +27,4 @@ class UuidConverter(BaseConverter):
         return UUID(value)
 
     def to_url(self, value):
-        return six.text_type(value)
+        return str(value)
