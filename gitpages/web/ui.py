@@ -23,7 +23,7 @@ from ..util import compat, inlineify
 _log = logging.getLogger(__name__)
 
 
-def create_blueprint():
+def create_blueprint() -> Blueprint:
 
     gitpages_web_ui = Blueprint(
         'gitpages_web_ui',
