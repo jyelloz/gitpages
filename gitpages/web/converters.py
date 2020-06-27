@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from six.moves.urllib.parse import quote_plus, unquote_plus
+from urllib.parse import quote_plus, unquote_plus
 from uuid import UUID
 
 from werkzeug.routing import BaseConverter
