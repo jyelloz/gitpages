@@ -4,8 +4,6 @@ import functools
 import posixpath
 from typing import Any, Callable, Iterable, Generator, NamedTuple
 
-import six
-
 from dulwich.repo import BaseRepo
 from dulwich.objects import Blob, Tree, TreeEntry
 
@@ -67,7 +65,7 @@ class PageRef(NamedTuple):
 
 class Page(NamedTuple):
     path: str
-    page: Any
+    page: Blob
     attachments: Iterable[PageAttachment]
 
 
@@ -88,11 +86,9 @@ def find_pages(
         prefix=PAGES_TREE,
 ) -> Iterable[PageRef]:
 
-    page_entries = six.iteritems(pages_tree)
-
     page_trees = (
         (_from_bytes(e.path), repository[e.sha])
-        for e in page_entries
+        for e in pages_tree.iteritems()
     )
 
     page_trees_with_rst_entries = (
@@ -125,7 +121,7 @@ def load_pages_with_attachments(
 def find_page_rst_entry(page_tree: Tree) -> TreeEntry:
 
     return next(
-        i for i in page_tree.items()
+        i for i in page_tree.iteritems()
         if i.path == PAGE_RST_BYTES
     )
 
@@ -142,11 +138,11 @@ def load_page_attachments(
     def load_page_attachment(attachment_tree: Tree) -> PageAttachment:
 
         data = next(
-            i for i in attachment_tree.items()
+            i for i in attachment_tree.iteritems()
             if i.path == ATTACHMENT_DATA
         )
         metadata_rst = next(
-            i for i in attachment_tree.items()
+            i for i in attachment_tree.iteritems()
             if i.path == ATTACHMENT_METADATA_RST
         )
         data_blob_id = data.sha
@@ -170,7 +166,7 @@ def load_page_attachments(
         )
 
     attachments = next(
-        (i for i in six.iteritems(page_tree) if i.path == ATTACHMENTS_TREE),
+        (i for i in page_tree.iteritems() if i.path == ATTACHMENTS_TREE),
         None,
     )
 
@@ -180,7 +176,7 @@ def load_page_attachments(
     page_attachments_tree = repository[attachments.sha]
 
     page_attachment_trees = (
-        repository[t.sha] for t in six.iteritems(page_attachments_tree)
+        repository[t.sha] for t in page_attachments_tree.iteritems()
     )
 
     return (load_page_attachment(t) for t in page_attachment_trees)
