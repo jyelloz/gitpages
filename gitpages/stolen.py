@@ -5,7 +5,6 @@ This is all code that I did not write.
 '''
 
 import re
-import six
 from functools import wraps
 
 from unidecode import unidecode
@@ -24,7 +23,7 @@ http://flask.pocoo.org/snippets/5/
 """
 
 
-def slugify(text, delim=u'-'):
+def slugify(text, delim='-'):
     """Generates an ASCII-only slug."""
 
     result = []
@@ -34,7 +33,7 @@ def slugify(text, delim=u'-'):
     for word in _punct_re.split(text_stripped):
         result.extend(unidecode(word).split())
 
-    return six.text_type(delim.join(result))
+    return str(delim).join(result)
 
 
 def cached(key, key_builder=None, timeout=5 * 60):
