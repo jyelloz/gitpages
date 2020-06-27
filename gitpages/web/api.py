@@ -5,7 +5,7 @@ import re
 from datetime import datetime, timedelta
 from functools import partial
 from collections import namedtuple
-from typing import Callable, Iterable, NamedTuple
+from typing import Callable, Iterable, NamedTuple, Optional
 
 from flask import url_for
 from whoosh.query import Term, DateRange, And, Or, NestedChildren, Every
@@ -22,10 +22,6 @@ _content_disposition_expression = re.compile(
     r'^.*;\s*filename=(.+?)(:?;\s*.*)*$'
 )
 
-_PageInfo = namedtuple(
-    'PageInfo',
-    'date slug ref title status blob_id path revision_date revision_slug',
-)
 _Page = namedtuple('Page', 'info doc')
 _PageAttachmentMetadata = namedtuple(
     'PageAttachmentMetadata',
@@ -33,7 +29,17 @@ _PageAttachmentMetadata = namedtuple(
 )
 
 
-class PageInfo(_PageInfo):
+class PageInfo(NamedTuple):
+
+    date: datetime
+    slug: str
+    ref: Optional[str]
+    title: str
+    status: str
+    blob_id: str
+    path: str
+    revision_date: datetime
+    revision_slug: str
 
     def to_url(self, _external=False):
         return url_for(
