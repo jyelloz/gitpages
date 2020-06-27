@@ -5,9 +5,12 @@ import re
 from datetime import datetime, timedelta
 from functools import partial
 from collections import namedtuple
+from typing import Callable, NamedTuple
 
 from flask import url_for
 from whoosh.query import Term, DateRange, And, Or, NestedChildren, Every
+
+from dulwich.objects import Blob
 
 from .exceptions import PageNotFound, AttachmentNotFound
 from ..util import cached
@@ -28,10 +31,7 @@ _PageAttachmentMetadata = namedtuple(
     'PageAttachmentMetadata',
     'attachment_id content_type content_disposition content_length',
 )
-_PageAttachment = namedtuple(
-    'PageAttachment',
-    'metadata data',
-)
+
 
 class PageInfo(_PageInfo):
 
@@ -88,7 +88,10 @@ class PageAttachmentMetadata(_PageAttachmentMetadata):
         )
 
 
-class PageAttachment(_PageAttachment):
+class PageAttachment(NamedTuple):
+
+    metadata: PageAttachmentMetadata
+    data: Callable
 
     @property
     def filename(self):
