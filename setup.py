@@ -33,7 +33,6 @@ setup(
         'Unidecode',
         'Whoosh',
         'click',
-        'six',
     ],
     setup_requires=['pytest-runner'],
     tests_require=['pytest', 'pytest-cov'],
