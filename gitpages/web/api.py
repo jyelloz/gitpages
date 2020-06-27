@@ -5,7 +5,7 @@ import re
 from datetime import datetime, timedelta
 from functools import partial
 from collections import namedtuple
-from typing import Callable, NamedTuple
+from typing import Callable, Iterable, NamedTuple
 
 from flask import url_for
 from whoosh.query import Term, DateRange, And, Or, NestedChildren, Every
@@ -131,7 +131,7 @@ class GitPages(object):
         self._searcher = searcher
 
     @classmethod
-    def _load_page_info(cls, result):
+    def _load_page_info(cls, result) -> PageInfo:
 
         return PageInfo(
             slug=result['page_slug'],
@@ -410,7 +410,11 @@ class GitPages(object):
             for r in results
         )
 
-    def attachments_by_path(self, path, tree_id=None):
+    def attachments_by_path(
+            self,
+            path: str,
+            tree_id=None,
+    ) -> Iterable[PageAttachment]:
 
         page_kind, attachment_kind = (
             (u'page', u'page-attachment') if tree_id is None
@@ -443,7 +447,7 @@ class GitPages(object):
         ref,
         page_length=10,
         statuses=_default_statuses,
-    ):
+    ) -> Iterable[PageInfo]:
 
         latest = page.info.date
 
@@ -479,7 +483,7 @@ class GitPages(object):
         ref,
         page_length=10,
         statuses=_default_statuses,
-    ):
+    ) -> Iterable[PageInfo]:
 
         earliest = page.info.date
 
@@ -510,7 +514,7 @@ class GitPages(object):
 
     def recent_pages(
         self, page_number, page_length, statuses=_default_statuses
-    ):
+    ) -> Iterable[PageInfo]:
 
         query = Term('kind', 'page') & statuses_query('page', statuses)
 
@@ -590,7 +594,7 @@ class GitPages(object):
 
 
 @cached(key='page/%s', key_builder=lambda blob: _bytes_to_text(blob.id))
-def render_page_content(blob):
+def render_page_content(blob: Blob):
 
     from docutils.core import publish_parts
     from gitpages.web.rst import GitPagesWriter
