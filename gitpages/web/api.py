@@ -158,17 +158,16 @@ class GitPages(object):
         )
 
     @classmethod
-    def _load_page(cls, result, parts):
-        """
-        :rtype: Page
-        """
+    def _load_page(cls, result, parts) -> Page:
         return Page(
             info=cls._load_page_info(result),
             doc=parts,
         )
 
     @classmethod
-    def _load_page_revision(cls, page_result, page_revision_result, parts):
+    def _load_page_revision(
+            cls, page_result, page_revision_result, parts,
+    ) -> Page:
         return Page(
             info=cls._load_page_revision_info(
                 page_result,
@@ -178,7 +177,7 @@ class GitPages(object):
         )
 
     @classmethod
-    def _load_attachment(cls, repo, result):
+    def _load_attachment(cls, repo, result) -> PageAttachment:
 
         metadata = PageAttachmentMetadata(
             attachment_id=result['attachment_id'],
@@ -199,10 +198,7 @@ class GitPages(object):
             data=data,
         )
 
-    def page_by_path(self, path):
-        """
-        :rtype: Page
-        """
+    def page_by_path(self, path) -> Page:
 
         results = self._searcher.search(
             Term(u'kind', u'page') & Term(u'page_path', path),
@@ -225,7 +221,9 @@ class GitPages(object):
             parts,
         )
 
-    def page(self, date, slug, tree_id=None, statuses=_default_statuses):
+    def page(
+            self, date, slug, tree_id=None, statuses=_default_statuses,
+    ) -> Page:
 
         earliest = datetime(date.year, date.month, date.day)
         latest = earliest + self._max_timedelta
@@ -321,7 +319,7 @@ class GitPages(object):
 
         return results
 
-    def attachment(self, attachment_id):
+    def attachment(self, attachment_id) -> PageAttachment:
 
         # FIXME: make it impossible to load attachments whose latest commit's
         # page is not publicly visible
@@ -348,15 +346,13 @@ class GitPages(object):
             content_disposition=result['attachment_content_disposition'],
             content_length=result['attachment_content_length'],
         )
-        attachment = PageAttachment(
+        return PageAttachment(
             metadata=metadata,
             data=partial(
                 self._repo.get_object,
                 data_blob_id,
             ),
         )
-
-        return attachment
 
     def attachments(
         self,
