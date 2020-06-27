@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import six
-
 
 class PageNotFound(Exception):
 
@@ -13,7 +11,7 @@ class PageNotFound(Exception):
 
     def __unicode__(self):
 
-        return u', '.join(repr(arg) for arg in self.args)
+        return ', '.join(repr(arg) for arg in self.args)
 
     def __repr__(self):
 
@@ -32,7 +30,7 @@ class AttachmentNotFound(Exception):
 
     def __unicode__(self):
 
-        return six.text_type(repr(self.tree_id))
+        return repr(self.tree_id)
 
     def __repr__(self):
 
