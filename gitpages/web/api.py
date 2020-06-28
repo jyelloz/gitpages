@@ -4,7 +4,16 @@ import logging
 import re
 from datetime import datetime, timedelta
 from functools import partial
-from typing import Any, Callable, Iterable, Mapping, NamedTuple, Optional
+from typing import (
+        Any,
+        Callable,
+        Dict,
+        Iterable,
+        Mapping,
+        NamedTuple,
+        Optional,
+        Tuple,
+)
 
 from flask import url_for
 from whoosh.query import Term, DateRange, And, Or, NestedChildren, Every
@@ -552,7 +561,7 @@ class GitPages(object):
         end_date_excl=False,
         page_length=10,
         statuses=_default_statuses,
-    ):
+    ) -> Tuple[Iterable[Page], Iterable[Dict]]:
 
         status_clause = statuses_query('page', statuses)
 
