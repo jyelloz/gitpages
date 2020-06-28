@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from docutils.writers.html4css1 import HTMLTranslator, Writer
+from docutils.writers.html5_polyglot import HTMLTranslator, Writer
 from docutils.nodes import Inline, TextElement
 from docutils.parsers.rst.roles import register_local_role
 
