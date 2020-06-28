@@ -133,10 +133,6 @@ def _to_bytes(s):
     return s.encode('ascii')
 
 
-def _get_page_blob_id(result):
-    return _to_bytes(result['page_blob_id'])
-
-
 def _get_attachement_data_blob_id(result):
     return _to_bytes(result['attachment_data_blob_id'])
 
@@ -151,52 +147,48 @@ class GitPages(object):
         self._searcher = searcher
 
     @classmethod
-    def _load_page_info(cls, result) -> PageInfo:
-
+    def _load_page_info(cls, page: dict) -> PageInfo:
         return PageInfo(
-            slug=result['page_slug'],
+            slug=page['page_slug'],
             ref=None,
-            blob_id=result['page_blob_id'],
-            date=result['page_date'],
-            title=result['page_title'],
-            status=result['page_status'],
-            path=result['page_path'],
-            revision_slug=result['page_slug'],
-            revision_date=result['page_date'],
+            blob_id=page['page_blob_id'],
+            date=page['page_date'],
+            title=page['page_title'],
+            status=page['page_status'],
+            path=page['page_path'],
+            revision_slug=page['page_slug'],
+            revision_date=page['page_date'],
         )
 
     @classmethod
-    def _load_page_revision_info(cls, page_result, page_revision_result):
-
+    def _load_page_revision_info(cls, page: dict, revision: dict) -> PageInfo:
         return PageInfo(
-            slug=page_result['page_slug'],
-            date=page_result['page_date'],
-            ref=page_revision_result['revision_tree_id'],
-            blob_id=page_revision_result['revision_blob_id'],
-            title=page_revision_result['revision_title'],
-            status=page_revision_result['revision_status'],
-            path=page_revision_result['revision_path'],
-            revision_slug=page_revision_result['revision_slug'],
-            revision_date=page_revision_result['revision_date'],
+            slug=page['page_slug'],
+            date=page['page_date'],
+            ref=revision['revision_tree_id'],
+            blob_id=revision['revision_blob_id'],
+            title=revision['revision_title'],
+            status=revision['revision_status'],
+            path=revision['revision_path'],
+            revision_slug=revision['revision_slug'],
+            revision_date=revision['revision_date'],
         )
 
     @classmethod
-    def _load_page(cls, result, parts) -> Page:
+    def _load_page(cls, result) -> Page:
         return Page(
             info=cls._load_page_info(result),
-            doc=parts,
+            doc=lambda: result['page_rendered'],
         )
 
     @classmethod
-    def _load_page_revision(
-            cls, page_result, page_revision_result, parts,
-    ) -> Page:
+    def _load_page_revision(cls, page_result, page_revision_result) -> Page:
         return Page(
             info=cls._load_page_revision_info(
                 page_result,
                 page_revision_result,
             ),
-            doc=parts,
+            doc=lambda: page_revision_result['revision_rendered'],
         )
 
     @classmethod
@@ -233,16 +225,7 @@ class GitPages(object):
 
         page_result = next(iter(results))
 
-        page_blob_id_bytes = _get_page_blob_id(page_result)
-
-        blob = self._repo.get_object(page_blob_id_bytes)
-
-        parts = partial(render_page_content, blob)
-
-        return self._load_page(
-            page_result,
-            parts,
-        )
+        return self._load_page(page_result)
 
     def page(
             self, date, slug, tree_id=None, statuses=_default_statuses,
@@ -275,16 +258,7 @@ class GitPages(object):
         page_result = next(iter(results))
 
         if tree_id is None:
-
-            blob_id = _get_page_blob_id(page_result)
-            blob = self._repo.get_object(blob_id)
-
-            parts = partial(render_page_content, blob)
-
-            return self._load_page(
-                page_result,
-                parts,
-            )
+            return self._load_page(page_result)
 
         pq = Term('kind', 'page')
         cq = Term('page_path', page_result['page_path']) & statuses_clause
@@ -299,15 +273,9 @@ class GitPages(object):
 
         page_revision_result = next(iter(historic_results))
 
-        blob_id = page_revision_result['revision_blob_id']
-        blob = self._repo.get_object(blob_id)
-
-        parts = partial(render_page_content, blob)
-
         return self._load_page_revision(
             page_result,
             page_revision_result,
-            parts,
         )
 
     def history(
@@ -369,6 +337,7 @@ class GitPages(object):
             content_disposition=result['attachment_content_disposition'],
             content_length=result['attachment_content_length'],
         )
+
         return PageAttachment(
             metadata=metadata,
             data=partial(
@@ -579,8 +548,6 @@ class GitPages(object):
                 endexcl=bool(end_date_excl),
             )
 
-        repo = self._repo
-
         results = self._searcher.search_page(
             Term('kind', 'page') & query,
             pagenum=page_number,
@@ -589,38 +556,22 @@ class GitPages(object):
             reverse=True,
         )
 
-        results_blob_ids = (
-            (r, _get_page_blob_id(r))
-            for r in results
-        )
-
-        results_blobs = (
-            (r, repo.get_object(page_blob_id))
-            for r, page_blob_id in results_blob_ids
-        )
-
-        results_parts = (
-            (r, partial(render_page_content, blob))
-            for r, blob in results_blobs
-        )
-
         return (
-            self._load_page(r, parts)
-            for r, parts in results_parts
+            self._load_page(r)
+            for r in results
         ), results
 
     def teardown(self):
         pass
 
 
-@cached(key='page/%s', key_builder=lambda blob: _bytes_to_text(blob.id))
-def render_page_content(blob: Blob) -> DocutilsParts:
+def render_page_content(source: str) -> DocutilsParts:
 
     from docutils.core import publish_parts
     from gitpages.web.rst import GitPagesWriter
 
     return publish_parts(
-        source=blob.data,
+        source=source,
         writer=GitPagesWriter(),
         settings_overrides={
             'initial_header_level': 3,

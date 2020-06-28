@@ -26,6 +26,7 @@ from .util.compat import (
     _bytes_to_text as bytes_to_text,
     _text_to_bytes as text_to_bytes,
 )
+from .web import api
 
 
 def makedirs_quiet(path):
@@ -70,6 +71,8 @@ def write_page(
     status = docinfo['status']
     blob_id = bytes_to_text(page.id)
 
+    rendered = render_page(page)
+
     writer.add_document(
         kind='page',
         page_date=date,
@@ -78,6 +81,7 @@ def write_page(
         page_status=status,
         page_path=path,
         page_blob_id=blob_id,
+        page_rendered=rendered,
     )
 
     writer.add_document(kind='page-dummy-child')
@@ -132,6 +136,8 @@ def write_revision(
     page_tree = repo[page_tree_id]
     attachments = git_storage.load_page_attachments(repo, page_tree)
 
+    rendered = render_page(page_blob)
+
     with writer.group():
 
         writer.add_document(
@@ -149,6 +155,7 @@ def write_revision(
             revision_author_time=author_time,
             revision_commit_time=commit_time,
             revision_message=bytes_to_text(commit.message),
+            revision_rendered=rendered,
         )
 
         writer.add_document(kind='revision-dummy-child')
@@ -281,3 +288,6 @@ def get_docinfo_as_dict(doctree):
     )
 
     return docinfo_as_dict(docinfo)
+
+def render_page(blob: Blob):
+    return api.render_page_content(bytes_to_text(blob.data))
