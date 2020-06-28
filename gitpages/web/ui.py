@@ -354,7 +354,7 @@ def atom_feed():
     feed.title(config['SITE_TITLE'])
     feed.link(href=request.url_root, rel='alternate')
 
-    results, results_page = g.gitpages.index(
+    results, *_ = g.gitpages.index(
         1,
         ref=current_app.default_ref,
         statuses=g.allowed_statuses,
