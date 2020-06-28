@@ -8,6 +8,9 @@ pytest = "*"
 pytest-cov = "*"
 coverage = "*"
 ptpython = "*"
+jedi = "*"
+pylint = "*"
+mypy = "*"
 
 [packages]
 gitpages = {editable = true, path = "."}
