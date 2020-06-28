@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from whoosh.fields import SchemaClass, ID, DATETIME, TEXT, NUMERIC
+from whoosh.fields import SchemaClass, ID, DATETIME, TEXT, NUMERIC, STORED
 
 
 class DateRevisionHybrid(SchemaClass):
@@ -13,6 +13,7 @@ class DateRevisionHybrid(SchemaClass):
     page_status = ID(stored=True)
     page_path = ID(stored=True)
     page_blob_id = ID(stored=True)
+    page_rendered = STORED()
 
     revision_date = DATETIME(stored=True)
     revision_slug = ID(stored=True)
@@ -27,6 +28,7 @@ class DateRevisionHybrid(SchemaClass):
     revision_author_time = DATETIME(stored=True)
     revision_commit_time = DATETIME(stored=True)
     revision_message = TEXT(stored=True)
+    revision_rendered = STORED()
 
     attachment_id = ID(stored=True)
     attachment_data_blob_id = ID(stored=True)
