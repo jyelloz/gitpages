@@ -34,6 +34,4 @@ setup(
         'Whoosh',
         'click',
     ],
-    setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'pytest-cov'],
 )
