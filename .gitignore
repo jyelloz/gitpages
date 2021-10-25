@@ -6,4 +6,4 @@
 /cover
 /.tox
 /.eggs
-/Pipfile.lock
+/poetry.lock
