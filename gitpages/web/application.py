@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from flask import Flask
+from typing import Optional
+from collections.abc import Callable
+
+from flask import Flask, Blueprint
 from flask_failsafe import failsafe
 
 from typogrify.templatetags.jinja_filters import register as register_typogrify
@@ -18,7 +21,10 @@ def create(*args, **kwargs) -> Flask:
     return application
 
 
-def register_gitpages_blueprint(application: Flask) -> Flask:
+def register_gitpages_blueprint(
+    application: Flask,
+    extra_config: Optional[Callable[[Blueprint], Blueprint]]=None,
+) -> Flask:
 
     from . import ui
 
@@ -28,6 +34,9 @@ def register_gitpages_blueprint(application: Flask) -> Flask:
     register_typogrify(application.jinja_env)
 
     gitpages_web_ui = ui.create_blueprint()
+    if extra_config:
+        gitpages_web_ui = extra_config(gitpages_web_ui)
+
     application.register_blueprint(gitpages_web_ui)
 
     return application
