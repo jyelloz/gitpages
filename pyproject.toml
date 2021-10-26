@@ -4,7 +4,7 @@ version = "0.3"
 description = "Git-backed web publishing code"
 authors = ["Jordan Yelloz <jordan@yelloz.me>"]
 readme = "README.rst"
-license = "GPLv2"
+license = "GPL-2.0-only"
 
 [tool.poetry.dependencies]
 python = "^3.8"
