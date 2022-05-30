@@ -12,7 +12,7 @@ from flask import (
     Blueprint, current_app, g, render_template, request, redirect, url_for
 )
 from werkzeug.exceptions import NotFound
-from feedgen.feed import FeedGenerator
+from feedwerk.atom import AtomFeed, FeedEntry
 
 from .exceptions import PageNotFound, AttachmentNotFound
 from .api import GitPages
@@ -349,10 +349,11 @@ def atom_feed():
 
     config = current_app.config
 
-    feed = FeedGenerator()
-    feed.id(request.url)
-    feed.title(config['SITE_TITLE'])
-    feed.link(href=request.url_root, rel='alternate')
+    feed = AtomFeed(
+        title=config['SITE_TITLE'],
+        url=request.host_url,
+        feed_url=request.url,
+    )
 
     results, *_ = g.gitpages.index(
         1,
@@ -368,25 +369,18 @@ def atom_feed():
         title = doc['title']
         url = urljoin(request.url_root, page.to_url())
 
-        entry = feed.add_entry()
-        entry.title(title)
-        entry.id(url)
-        entry.updated(utc_date)
-        entry.pubdate(utc_date)
-        entry.link(href=url, rel='alternate')
-        entry.source(url, title)
-        entry.content(doc['body'], type='html')
+        entry = FeedEntry(
+            title=title,
+            body=doc['body'],
+            content_type='html',
+            url=url,
+            updated=utc_date,
+            published=utc_date,
+            uid=url,
+        )
+        feed.add(entry)
 
-    xml = feed.atom_str()
-
-    return (
-        xml,
-        200,
-        {
-            'Content-Type': 'application/atom+xml',
-            'Content-Length': len(xml),
-        },
-    )
+    return feed.get_response()
 
 
 
