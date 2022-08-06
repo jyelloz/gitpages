@@ -21,8 +21,6 @@ from whoosh.query import Term, DateRange, And, Or, NestedChildren, Every
 from dulwich.objects import Blob
 
 from .exceptions import PageNotFound, AttachmentNotFound
-from ..util import cached
-from ..util.compat import _bytes_to_text
 
 
 _log = logging.getLogger(__name__)
