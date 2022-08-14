@@ -12,20 +12,20 @@ def build_index(app):
 
     from .indexer import build_hybrid_index
     from .web import ui
+    from flask import g
 
     with app.test_request_context():
 
-        ui.setup_gitpages_application()
         ui.setup_gitpages()
 
-        index = app.index
+        index = g.index
 
         index.delete_by_query(Every())
 
         build_hybrid_index(
             index=index,
-            repo=app.repo,
-            ref=app.default_ref,
+            repo=g.repo,
+            ref=g.default_ref,
         )
 
 
@@ -82,7 +82,6 @@ def shell(app, shell):
     )
 
     with app.test_request_context():
-        ui.setup_gitpages_application()
         ui.setup_gitpages()
         shells[shell](None, context)()
 
