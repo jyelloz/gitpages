@@ -3,8 +3,7 @@
 import logging
 from datetime import datetime
 from urllib.parse import urljoin
-
-import pytz
+from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
 
@@ -21,6 +20,7 @@ from ..util import compat, inlineify
 
 
 _log = logging.getLogger(__name__)
+UTC = ZoneInfo('UTC')
 
 
 def create_blueprint() -> Blueprint:
@@ -239,7 +239,7 @@ def page_archive_view(year, month, day, slug, tree_id):
 
     try:
 
-        date = g.timezone.localize(datetime(year, month, day))
+        date = datetime(year, month, day, tzinfo=g.timezone)
         page = g.gitpages.page(date, slug, tree_id, g.allowed_statuses)
 
         attachments_date, attachments_slug, attachments_ref = (
@@ -269,7 +269,7 @@ def daily_archive_default(year, month, day, page_number):
 
 def daily_archive(year, month, day, ref, page_number):
 
-    earliest = g.timezone.localize(datetime(year, month, day))
+    earliest = datetime(year, month, day, tzinfo=g.timezone)
     latest = earliest + relativedelta(days=1)
 
     return date_range_index(earliest, latest, ref, page_number)
@@ -282,7 +282,7 @@ def monthly_archive_default(year, month, page_number):
 
 def monthly_archive(year, month, ref, page_number):
 
-    earliest = g.timezone.localize(datetime(year, month, 1))
+    earliest = datetime(year, month, 1, tzinfo=g.timezone)
     latest = earliest + relativedelta(months=1)
 
     return date_range_index(earliest, latest, ref, page_number)
@@ -295,7 +295,7 @@ def yearly_archive_default(year, page_number):
 
 def yearly_archive(year, ref, page_number):
 
-    earliest = g.timezone.localize(datetime(year, 1, 1))
+    earliest = datetime(year, 1, 1, tzinfo=g.timezone)
     latest = earliest + relativedelta(years=1)
 
     return date_range_index(earliest, latest, ref, page_number)
@@ -365,7 +365,7 @@ def atom_feed():
 
         doc = page.doc()
 
-        utc_date = page.info.date.astimezone(pytz.utc)
+        utc_date = page.info.date.astimezone(UTC)
         title = doc['title']
         url = urljoin(request.url_root, page.to_url())
 
