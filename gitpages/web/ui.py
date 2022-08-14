@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from collections.abc import Mapping
 from datetime import datetime
 from urllib.parse import urljoin
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
@@ -160,43 +162,54 @@ def create_blueprint() -> Blueprint:
         ),
     )
 
-    gitpages_web_ui.before_app_first_request(setup_gitpages_application)
     gitpages_web_ui.before_request(setup_gitpages)
     gitpages_web_ui.teardown_request(teardown_gitpages)
 
     return gitpages_web_ui
 
 
-def setup_gitpages_application():
+class GitPagesConfig:
 
-    _log.debug('setting up blueprint')
+    @property
+    def cfg(self) -> Mapping[str, Any]:
+        return current_app.config
 
-    config = current_app.config
+    @property
+    def timezone(self):
+        return self.cfg['TIMEZONE']
 
-    repo = config['GITPAGES_REPOSITORY']
-    ref = config['GITPAGES_DEFAULT_REF']
+    @property
+    def index(self):
+        return self.cfg['GITPAGES_INDEX'](schema=DateRevisionHybrid())
 
-    index = config['GITPAGES_INDEX'](
-        schema=DateRevisionHybrid()
-    )
+    @property
+    def allowed_statuses(self):
+        return self.cfg['GITPAGES_ALLOWED_STATUSES']
 
-    current_app.repo = repo
-    current_app.default_ref = compat._text_to_bytes(ref)
-    current_app.allowed_statuses = config['GITPAGES_ALLOWED_STATUSES']
-    current_app.timezone = config['TIMEZONE']
-    current_app.index = index
+    @property
+    def default_ref(self):
+        return compat._text_to_bytes(self.cfg['GITPAGES_DEFAULT_REF'])
+
+    @property
+    def repo(self):
+        return self.cfg['GITPAGES_REPOSITORY']
 
 
 def setup_gitpages():
 
-    g.timezone = current_app.timezone
+    config = GitPagesConfig()
+
+    g.repo = config.repo
+    g.index = config.index
+    g.timezone = config.timezone
     g.utcnow = datetime.utcnow()
-    g.searcher = current_app.index.searcher()
+    g.searcher = config.index.searcher()
     g.gitpages = GitPages(
-        current_app.repo,
+        config.repo,
         g.searcher,
     )
-    g.allowed_statuses = current_app.allowed_statuses
+    g.allowed_statuses = config.allowed_statuses
+    g.default_ref = config.default_ref
 
 
 def teardown_gitpages(exception=None):
@@ -215,7 +228,7 @@ def teardown_gitpages(exception=None):
 
 def index_view_default_ref(page_number):
 
-    return index_view(page_number, current_app.default_ref)
+    return index_view(page_number, g.default_ref)
 
 
 def index_view(page_number, ref):
@@ -264,7 +277,7 @@ def page_archive_view(year, month, day, slug, tree_id):
 def daily_archive_default(year, month, day, page_number):
 
     return daily_archive(
-        year, month, day, current_app.default_ref, page_number
+        year, month, day, g.default_ref, page_number
     )
 
 
@@ -278,7 +291,7 @@ def daily_archive(year, month, day, ref, page_number):
 
 def monthly_archive_default(year, month, page_number):
 
-    return monthly_archive(year, month, current_app.default_ref, page_number)
+    return monthly_archive(year, month, g.default_ref, page_number)
 
 
 def monthly_archive(year, month, ref, page_number):
@@ -291,7 +304,7 @@ def monthly_archive(year, month, ref, page_number):
 
 def yearly_archive_default(year, page_number):
 
-    return yearly_archive(year, current_app.default_ref, page_number)
+    return yearly_archive(year, g.default_ref, page_number)
 
 
 def yearly_archive(year, ref, page_number):
@@ -358,7 +371,7 @@ def atom_feed():
 
     results, *_ = g.gitpages.index(
         1,
-        ref=current_app.default_ref,
+        ref=g.default_ref,
         statuses=g.allowed_statuses,
     )
 
