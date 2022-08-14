@@ -17,6 +17,7 @@ from .exceptions import PageNotFound, AttachmentNotFound
 from .api import GitPages
 from ..schema import DateRevisionHybrid
 from ..util import compat, inlineify
+from .. import patches as _
 
 
 _log = logging.getLogger(__name__)
