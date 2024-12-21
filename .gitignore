@@ -7,3 +7,4 @@
 /.tox
 /.eggs
 /poetry.lock
+/uv.lock

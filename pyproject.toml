@@ -1,40 +1,45 @@
-[tool.poetry]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
 name = "GitPages"
 version = "0.3"
 description = "Git-backed web publishing code"
-authors = ["Jordan Yelloz <jordan@yelloz.me>"]
 readme = "README.rst"
+authors = [
+  { name = "Jordan Yelloz", email = "jordan@yelloz.me" },
+]
 license = "GPL-2.0-only"
+requires-python = ">=3.12"
 
-[tool.poetry.dependencies]
-python = "^3.8"
-cachelib = "*"
-click = "*"
-docutils = "*"
-dulwich = "*"
-feedwerk = "*"
-Flask = "*"
-Flask-Failsafe = "*"
-Pygments = "*"
-python-dateutil = "*"
-typogrify = "*"
-Unidecode = "*"
-Whoosh = "*"
-wrapt = "*"
+dependencies = [
+  "cachelib",
+  "click",
+  "docutils",
+  "dulwich",
+  "feedwerk",
+  "flask",
+  "flask-failsafe",
+  "pygments",
+  "python-dateutil",
+  "typogrify",
+  "unidecode",
+  "whoosh",
+  "wrapt",
+]
 
-[tool.poetry.dev-dependencies]
-coverage = "*"
-iniconfig = "*"
-jedi = "*"
-mypy = "*"
-pylint = "*"
-pytest = "*"
-pytest-cov = "*"
+[project.optional-dependencies]
+dev = [
+  "jedi",
+  "mypy",
+  "pylint",
+]
 
-[tool.pyright]
-venvPath = "."
-venv = ".venv"
+[tool.hatch.build.targets.sdist]
+ignore-vcs = true
+only-include = ['/gitpages']
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.hatch.build.targets.wheel]
+ignore-vcs = true
+only-include = ['/gitpages']
