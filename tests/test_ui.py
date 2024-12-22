@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import cachelib
-from zoneinfo import ZoneInfo
+from datetime import UTC
 
 from gitpages.web.application import create
 
@@ -21,7 +21,7 @@ class UITest(GitPagesTestcase):
         app.testing = True
 
         app.config.update(
-            TIMEZONE=ZoneInfo('UTC'),
+            TIMEZONE=UTC,
             SITE_TITLE=u'GitPages',
             GITPAGES_REPOSITORY=self.repo,
             GITPAGES_DEFAULT_REF='refs/heads/master',

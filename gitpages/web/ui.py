@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from urllib.parse import urljoin
 from typing import Any
-from zoneinfo import ZoneInfo
+from datetime import UTC
 
 from dateutil.relativedelta import relativedelta
 
@@ -23,7 +23,6 @@ from .. import patches as _
 
 
 _log = logging.getLogger(__name__)
-UTC = ZoneInfo('UTC')
 
 
 def create_blueprint() -> Blueprint:
@@ -202,7 +201,7 @@ def setup_gitpages():
     g.repo = config.repo
     g.index = config.index
     g.timezone = config.timezone
-    g.utcnow = datetime.utcnow()
+    g.utcnow = compat.utcnow()
     g.searcher = config.index.searcher()
     g.gitpages = GitPages(
         config.repo,
